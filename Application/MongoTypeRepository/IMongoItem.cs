@@ -1,4 +1,4 @@
-namespace MongoRepository
+namespace MongoTypeRepository
 {
     public interface IMongoItem
     {

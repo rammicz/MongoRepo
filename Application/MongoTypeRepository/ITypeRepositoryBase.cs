@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using MongoRepository.Contracts;
+using MongoTypeRepository.Contracts;
 
-namespace MongoRepository
+namespace MongoTypeRepository
 {
     public interface ITypeRepositoryBase<Tdb> where Tdb : IMongoItem
     {

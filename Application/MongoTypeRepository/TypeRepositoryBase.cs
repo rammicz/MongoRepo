@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
-using MongoRepository.Contracts;
+using MongoTypeRepository.Contracts;
 
-namespace MongoRepository
+namespace MongoTypeRepository
 {
     public abstract class TypeRepositoryBase<Tdb> : ITypeRepositoryBase<Tdb> where Tdb : IMongoItem
     {

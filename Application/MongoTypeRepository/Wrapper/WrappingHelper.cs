@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MongoRepository.Wrapper
+namespace MongoTypeRepository.Wrapper
 {
     public class WrappingHelper
     {

@@ -1,7 +1,7 @@
 ﻿using System;
-using MongoRepository.Wrapper;
 using MongoTypeRepository.Example.CustomRepositories;
 using MongoTypeRepository.Example.YourExistingTypes;
+using MongoTypeRepository.Wrapper;
 
 namespace MongoTypeRepository.Example.DataModel
 {

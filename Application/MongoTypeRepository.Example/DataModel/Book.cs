@@ -1,5 +1,4 @@
 ﻿using System;
-using MongoRepository;
 
 namespace MongoTypeRepository.Example.DataModel
 {

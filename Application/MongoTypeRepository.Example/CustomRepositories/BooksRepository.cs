@@ -1,6 +1,5 @@
 ﻿using System.Threading.Tasks;
 using MongoDB.Driver.Linq;
-using MongoRepository;
 using MongoTypeRepository.Example.DataModel;
 
 namespace MongoTypeRepository.Example.CustomRepositories

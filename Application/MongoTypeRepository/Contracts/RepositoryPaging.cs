@@ -1,4 +1,4 @@
-﻿namespace MongoRepository.Contracts
+﻿namespace MongoTypeRepository.Contracts
 {
     public class RepositoryPaging
     {

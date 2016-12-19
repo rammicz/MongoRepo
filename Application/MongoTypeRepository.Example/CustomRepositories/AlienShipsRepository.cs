@@ -1,5 +1,4 @@
 ﻿using MongoDB.Driver;
-using MongoRepository;
 using MongoTypeRepository.Example.DataModel;
 
 namespace MongoTypeRepository.Example.CustomRepositories

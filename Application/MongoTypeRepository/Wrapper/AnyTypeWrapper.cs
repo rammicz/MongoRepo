@@ -1,4 +1,4 @@
-﻿namespace MongoRepository.Wrapper
+﻿namespace MongoTypeRepository.Wrapper
 {
     public class AnyTypeWrapper<T> : IMongoItem
     {
