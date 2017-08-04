@@ -33,10 +33,10 @@ namespace MongoTypeRepository
             SetUp(databaseName, collectionName);
         }
 
-        protected IMongoCollection<Tdb> Collection { get; set; }
-        protected MongoClient MongoClient { get; }
-
+        public IMongoCollection<Tdb> Collection { get; private set; }
+        public MongoClient MongoClient { get; }
         public IMongoQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
+
 
         public Tdb GetById(string id)
         {
