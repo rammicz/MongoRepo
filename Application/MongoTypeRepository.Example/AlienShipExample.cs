@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 using MongoTypeRepository.Example.CustomRepositories;
 using MongoTypeRepository.Example.DataModel;
 using MongoTypeRepository.Example.YourExistingTypes;
@@ -40,7 +41,7 @@ namespace MongoTypeRepository.Example
             return _alienRepo.CustomGetAlienShip();
         }
 
-        private static Book CreateBook(string id, string name)
+        private static Book CreateBook(ObjectId id, string name)
         {
             return new Book
             {

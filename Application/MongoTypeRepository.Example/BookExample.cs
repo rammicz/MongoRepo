@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using MongoTypeRepository.Example.CustomRepositories;
 using MongoTypeRepository.Example.DataModel;
 
@@ -19,10 +20,10 @@ namespace MongoTypeRepository.Example
 
         public void CreateBooks()
         {
-            Book book = CreateBook("1", "Strongly typed repository");
+            Book book = CreateBook(ObjectId.GenerateNewId(), "Strongly typed repository");
             _bookRepo.Save(book);
 
-            Book book2 = CreateBook("anyKey", "Plum fiction");
+            Book book2 = CreateBook(ObjectId.GenerateNewId(), "Plum fiction");
             _bookRepo.Save(book2);
         }
 
@@ -45,7 +46,7 @@ namespace MongoTypeRepository.Example
             return _bookRepo.GetBookCount();
         }
 
-        private static Book CreateBook(string id, string name)
+        private static Book CreateBook(ObjectId id, string name)
         {
             return new Book
             {

@@ -1,7 +1,9 @@
+using MongoDB.Bson;
+
 namespace MongoTypeRepository
 {
     public interface IMongoItem
     {
-        string Id { get; set; }
+        ObjectId Id { get; set; }
     }
 }

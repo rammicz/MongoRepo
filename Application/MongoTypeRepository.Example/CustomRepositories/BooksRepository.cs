@@ -6,7 +6,8 @@ namespace MongoTypeRepository.Example.CustomRepositories
 {
     public class BooksRepository : TypeRepositoryBase<Book>
     {
-        public BooksRepository() : base("MongoTypeRepository", "books")
+        //public BooksRepository() :  base(ConfigurationManager.ConnectionStrings["localMongo"].ConnectionString, "books")
+        public BooksRepository() :  base("MongoTypeRepository", "books", true)
         {
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 using MongoTypeRepository.Example.CustomRepositories;
 using MongoTypeRepository.Example.YourExistingTypes;
 using MongoTypeRepository.Wrapper;
@@ -15,7 +16,7 @@ namespace MongoTypeRepository.Example.DataModel
             //you should always handle the ID in wrapped items
             //you can also copy some of existing values from the object
             // e.g.: this.Id = alienShip.Identification;
-            this.Id = Guid.NewGuid().ToString();
+            this.Id = ObjectId.GenerateNewId();
         }
 
         public int YouCanDefineMorePropsHere { get; set; }

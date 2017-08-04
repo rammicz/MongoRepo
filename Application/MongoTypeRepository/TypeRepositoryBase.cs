@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
@@ -10,37 +11,32 @@ namespace MongoTypeRepository
 {
     public abstract class TypeRepositoryBase<Tdb> : ITypeRepositoryBase<Tdb> where Tdb : IMongoItem
     {
-        private static bool _isDbSetUp;
-
-        public TypeRepositoryBase(MongoUrl url, string databaseName, string collectionName) : this(databaseName, collectionName)
+        public TypeRepositoryBase(MongoUrl url, string collectionName)
         {
             MongoClient = new MongoClient(url);
+            SetUp(url.DatabaseName, collectionName);
         }
 
-        public TypeRepositoryBase(string connectionString, string databaseName, string collectionName) : this(databaseName, collectionName)
+        public TypeRepositoryBase(string connectionString, string collectionName)
         {
+            MongoUrl url = MongoUrl.Create(connectionString);
             MongoClient = new MongoClient(connectionString);
+            SetUp(url.DatabaseName, collectionName);
         }
 
-        public TypeRepositoryBase(MongoClientSettings mongoClientSettings, string databaseName, string collectionName) : this(databaseName, collectionName)
+        public TypeRepositoryBase(string databaseName, string collectionName, bool isLocal)
         {
-            MongoClient = new MongoClient(mongoClientSettings);
-        }
+            if(!isLocal)
+            { throw new Exception("This method can run only on local DB");}
 
-        public TypeRepositoryBase(string databaseName, string collectionName)
-        {
-            MongoClient = MongoClient ?? new MongoClient();
-            IMongoDatabase db = MongoClient.GetDatabase(databaseName);
-            Collection = db.GetCollection<Tdb>(collectionName);
+            MongoClient = new MongoClient();
+            SetUp(databaseName, collectionName);
         }
 
         protected IMongoCollection<Tdb> Collection { get; set; }
         protected MongoClient MongoClient { get; }
 
-        public IMongoQueryable<Tdb> CollectionQuery
-        {
-            get { return Collection.AsQueryable(); }
-        }
+        public IMongoQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
 
         public Tdb GetById(string id)
         {
@@ -50,14 +46,11 @@ namespace MongoTypeRepository
 
             return vystup.FirstOrDefault();
         }
-
-        public void Update(Tdb objectToSave)
-        {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
-            var updateOptions = new UpdateOptions { IsUpsert = false }; // update or insert / upsert
-            Collection.ReplaceOne(filter, objectToSave);
-        }
-
+        
+        /// <summary>
+        /// Replace or insert document in DB
+        /// </summary>
+        /// <param name="objectToSave"></param>
         public void Save(Tdb objectToSave)
         {
             FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
@@ -65,15 +58,30 @@ namespace MongoTypeRepository
             Collection.ReplaceOne(filter, objectToSave, updateOptions);
         }
 
+        /// <summary>
+        /// Replaces documents in DB, based on _id
+        /// </summary>
+        /// <param name="objectsToSave"></param>
         public void Update(IEnumerable<Tdb> objectsToSave)
         {
-            //var updateOptions = new UpdateOptions { IsUpsert = true }; // update or insert / upsert
             foreach (Tdb obj in objectsToSave)
             {
                 FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", obj.Id));
                 Collection.ReplaceOne(filter, obj);
             }
         }
+
+        /// <summary>
+        /// Replaces document in DB, based on _id
+        /// </summary>
+        /// <param name="objectsToSave"></param>
+        public void Update(Tdb objectToSave)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            var updateOptions = new UpdateOptions { IsUpsert = false }; // update or insert / upsert
+            Collection.ReplaceOne(filter, objectToSave);
+        }
+
 
         public void Insert(Tdb item)
         {
@@ -135,6 +143,12 @@ namespace MongoTypeRepository
             }
 
             return items;
+        }
+
+        private void SetUp(string databaseName, string collectionName)
+        {
+            IMongoDatabase db = MongoClient.GetDatabase(databaseName);
+            Collection = db.GetCollection<Tdb>(collectionName);
         }
     }
 }

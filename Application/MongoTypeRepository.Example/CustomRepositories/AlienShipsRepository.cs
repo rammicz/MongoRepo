@@ -1,11 +1,13 @@
-﻿using MongoDB.Driver;
+﻿using System.Configuration;
+using MongoDB.Driver;
 using MongoTypeRepository.Example.DataModel;
 
 namespace MongoTypeRepository.Example.CustomRepositories
 {
     public class AlienShipsRepository : TypeRepositoryBase<WrappedAlienShip>
     {
-        public AlienShipsRepository() : base("MongoTypeRepository", "alienShips")
+        //public AlienShipsRepository() :  base(ConfigurationManager.ConnectionStrings["localMongo"].ConnectionString, "alienShips")
+        public AlienShipsRepository() :  base("MongoTypeRepository", "alienShips", true)
         {
         }
 

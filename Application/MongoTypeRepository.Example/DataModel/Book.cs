@@ -1,4 +1,5 @@
 ﻿using System;
+using MongoDB.Bson;
 
 namespace MongoTypeRepository.Example.DataModel
 {
@@ -11,6 +12,6 @@ namespace MongoTypeRepository.Example.DataModel
         public string Author { get; set; }
         public DateTime DatePublished { get; set; }
         public BookChapter[] Chapters { get; set; }
-        public string Id { get; set; }
+        public ObjectId Id { get; set; }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace MongoTypeRepository.Wrapper
+﻿using MongoDB.Bson;
+
+namespace MongoTypeRepository.Wrapper
 {
     public class AnyTypeWrapper<T> : IMongoItem
     {
@@ -7,12 +9,12 @@
             Item = item;
         }
 
-        public AnyTypeWrapper(T item, string id) : this(item)
+        public AnyTypeWrapper(T item, ObjectId id) : this(item)
         {
             this.Id = id;
         } 
 
         public T Item { get; private set; }
-        public string Id { get; set; }
+        public ObjectId Id { get; set; }
     }
 }
