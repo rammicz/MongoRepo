@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>Rammi.MongoTypeRepository</id>
+    <version>1.0.1</version>
+    <title>Strongly typed MongoDB / CosmosDB repository</title>
+    <authors>Jiri Hernik</authors>
+    <owners>Jiri Hernik</owners>
+    <licenseUrl>https://github.com/rammicz/MongoRepo/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/rammicz/MongoRepo</projectUrl>
+    <iconUrl>http://rammi.cz/temp/mongorepo.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      Provides strong types and repository access for mongo DB and Azure Cosmos DB, which is both weak typed.
+
+      You can have all the sources with examples from here:
+      https://github.com/rammicz/MongoRepo
+    </description>
+    <releaseNotes>
+      - Connection string changes
+      - id is now objectId
+    </releaseNotes>
+    <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel</tags>
+    <dependencies>
+      <dependency id="MongoDB.Driver" version="2.4.4" />
+      <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
+    </dependencies>
+    <summary>
+      Provides strong types (data model) and repository access for mongo DB or CosmosDB
+
+      Sources here:
+      https://github.com/rammicz/MongoRepo
+    </summary>
+  </metadata>
+  <files>
+    <file src="bin\release\MongoTypeRepository.dll" target="\lib\net45" />
+  </files>
+</package>
