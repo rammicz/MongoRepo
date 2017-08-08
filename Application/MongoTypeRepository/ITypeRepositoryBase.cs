@@ -16,6 +16,6 @@ namespace MongoTypeRepository
         void Insert(IEnumerable<Tdb> items);
         void Delete(IMongoItem objectToDelete);
         void DeleteAll();
-        List<Tdb> GetResults(FilterDefinition<Tdb> filter = null, RepositoryPaging paging = null, SortDefinition<Tdb> sort = null);
+        List<Tdb> GetPagedResults(FilterDefinition<Tdb> filter = null, RepositoryPaging paging = null);
     }
 }

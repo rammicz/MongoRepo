@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>1.0.1</version>
+    <version>1.2.0-alpha</version>
     <title>Strongly typed MongoDB / CosmosDB repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -24,10 +24,9 @@
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel</tags>
     <dependencies>
       <dependency id="MongoDB.Driver" version="2.4.4" />
-      <dependency id="System.Runtime.InteropServices.RuntimeInformation" version="4.3.0" />
     </dependencies>
     <summary>
-      Provides strong types (data model) and repository access for mongo DB or CosmosDB
+      Provides strong types (data model) and repository access for mongo DB or Azure CosmosDB
 
       Sources here:
       https://github.com/rammicz/MongoRepo

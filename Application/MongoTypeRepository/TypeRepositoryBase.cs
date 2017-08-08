@@ -46,6 +46,18 @@ namespace MongoTypeRepository
 
             return vystup.FirstOrDefault();
         }
+
+        /// <summary>
+        /// Replace or insert document in DB, based on _id
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public void Save(IEnumerable<Tdb> objectsToSave)
+        {
+            foreach (Tdb objectToSave in objectsToSave)
+            {
+                Save(objectToSave);
+            }
+        }       
         
         /// <summary>
         /// Replace or insert document in DB
@@ -66,8 +78,7 @@ namespace MongoTypeRepository
         {
             foreach (Tdb obj in objectsToSave)
             {
-                FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", obj.Id));
-                Collection.ReplaceOne(filter, obj);
+               Update(obj);
             }
         }
 
@@ -79,7 +90,7 @@ namespace MongoTypeRepository
         {
             FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
             var updateOptions = new UpdateOptions { IsUpsert = false }; // update or insert / upsert
-            Collection.ReplaceOne(filter, objectToSave);
+            Collection.ReplaceOne(filter, objectToSave, updateOptions);
         }
 
 
@@ -107,22 +118,100 @@ namespace MongoTypeRepository
             Collection.DeleteMany(FilterDefinition<Tdb>.Empty);
         }
 
-        public List<Tdb> GetResults(FilterDefinition<Tdb> filter = null, RepositoryPaging paging = null, SortDefinition<Tdb> sort = null)
-        {
-            IFindFluent<Tdb, Tdb> filtered = Collection.Find(filter ?? JsonFilterDefinition<Tdb>.Empty);
+        public List<Tdb> GetPagedResults(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
+        { 
+            var fb = new FilterDefinitionBuilder<Tdb>();
+            FilterDefinition<Tdb> totalFilter = primaryFilters ?? Builders<Tdb>.Filter.Empty; // or maybe  JsonFilterDefinition<Tdb>.Empty
 
-            Task<long> totalTask = null;
-            if (paging != null)
+            if (paging.Filtering != null)
             {
-                //count is on it's own cursor, so it can work in paralel
-                totalTask = filtered.CountAsync();
+                foreach (Filtering filtering in paging.Filtering)
+                {
+                    FilterDefinition<Tdb> filter = null;
+                    int valueInt = 0;
+                    bool isInt = int.TryParse(filtering.Value, out valueInt);
+
+                    switch (filtering.Operator)
+                    {
+                        case FilterOperator.Equals:
+                            bool hodnotaBool;
+
+                            if (bool.TryParse(filtering.Value, out hodnotaBool))
+                            {
+                                filter = Builders<Tdb>.Filter.Eq(filtering.By, hodnotaBool);
+
+                                if (!hodnotaBool)
+                                {
+                                    filter |= Builders<Tdb>.Filter.Eq(filtering.By, BsonNull.Value);
+                                }
+                            }
+                            else
+                            {
+                                filter = Builders<Tdb>.Filter.Eq(filtering.By, filtering.Value);
+
+                                if (isInt)
+                                {
+                                    filter |= Builders<Tdb>.Filter.Eq(filtering.By, valueInt);
+                                }
+                            }
+
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.Contains:
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format(".*{0}.*", filtering.Value), "i"));
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.StartsWith:
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format("^{0}.*", filtering.Value), "i"));
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.EndsWidth:
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format(".*{0}$", filtering.Value), "i"));
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.GreaterThan:
+
+                            filter = Builders<Tdb>.Filter.Gt(filtering.By, valueInt);
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.GreaterThanOrEquals:
+                            filter = Builders<Tdb>.Filter.Gte(filtering.By, valueInt);
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.LessThan:
+                            filter = Builders<Tdb>.Filter.Lt(filtering.By, valueInt);
+                            totalFilter &= filter;
+                            break;
+                        case FilterOperator.LessThanOrEquals:
+                            filter = Builders<Tdb>.Filter.Lte(filtering.By, valueInt);
+                            totalFilter &= filter;
+                            break;
+                        default:
+                            throw new NotSupportedException("Unsupported filtering operator");
+                    }
+                }
             }
 
-            if (sort != null)
+            IFindFluent<Tdb, Tdb> filtered = Collection.Find(totalFilter);
+
+            //count is on it's own cursor, so it can work in paralel
+            Task<long> totalTask = filtered.CountAsync();
+
+            if (!string.IsNullOrWhiteSpace(paging.OrderBy))
             {
+                SortDefinition<Tdb> sort;
+                if (paging.OrderDirection == Ordering.asc)
+                {
+                    sort = Builders<Tdb>.Sort.Ascending(paging.OrderBy);
+                }
+                else
+                {
+                    sort = Builders<Tdb>.Sort.Descending(paging.OrderBy);
+                }
+
                 filtered = filtered.Sort(sort);
             }
-
+            
             if (paging.CurrentPage < 1)
             {
                 paging.CurrentPage = 1;
@@ -136,12 +225,9 @@ namespace MongoTypeRepository
             // runs over cursor in MongoDb
             List<Tdb> items = filtered.Skip((paging.CurrentPage - 1) * paging.PageSize).Limit(paging.PageSize).ToList();
 
-            if (totalTask != null)
-            {
-                totalTask.Wait();
-                paging.TotalItems = totalTask.Result;
-            }
-
+            totalTask.Wait();
+            paging.TotalItems = totalTask.Result;
+            
             return items;
         }
 
