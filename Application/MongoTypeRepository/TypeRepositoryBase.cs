@@ -101,15 +101,23 @@ namespace MongoTypeRepository
 
         public void Insert(IEnumerable<Tdb> items)
         {
-            if (items.Any())
-            {
-                Collection.InsertMany(items);
-            }
+            Collection.InsertMany(items);
         }
 
         public void Delete(IMongoItem objectToDelete)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToDelete.Id));
+            Delete(objectToDelete.Id);
+        }
+
+        public void Delete(string id)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+            Collection.DeleteOne(filter);
+        }
+
+        public void Delete(ObjectId id)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
             Collection.DeleteOne(filter);
         }
 

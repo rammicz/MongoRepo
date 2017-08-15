@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using MongoTypeRepository.Contracts;
@@ -15,6 +16,8 @@ namespace MongoTypeRepository
         void Insert(Tdb item);
         void Insert(IEnumerable<Tdb> items);
         void Delete(IMongoItem objectToDelete);
+        void Delete(string id);
+        void Delete(ObjectId id);
         void DeleteAll();
         List<Tdb> GetPagedResults(FilterDefinition<Tdb> filter = null, RepositoryPaging paging = null);
     }
