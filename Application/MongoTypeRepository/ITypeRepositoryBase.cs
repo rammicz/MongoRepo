@@ -10,6 +10,7 @@ namespace MongoTypeRepository
     {
         IMongoQueryable<Tdb> CollectionQuery { get; }
         Tdb GetById(string id);
+        Tdb GetById(ObjectId id);
         void Update(Tdb objectToSave);
         void Save(Tdb objectToSave);
         void Update(IEnumerable<Tdb> objectsToSave);

@@ -12,6 +12,7 @@ namespace MongoTypeRepository.Example
     public class BookExample
     {
         private BooksRepository _bookRepo;
+        private ObjectId _bookId;
 
         public BookExample()
         {
@@ -20,7 +21,8 @@ namespace MongoTypeRepository.Example
 
         public void CreateBooks()
         {
-            Book book = CreateBook(ObjectId.GenerateNewId(), "Strongly typed repository");
+            _bookId = ObjectId.GenerateNewId();
+            Book book = CreateBook(_bookId, "Strongly typed repository");
             _bookRepo.Save(book);
 
             Book book2 = CreateBook(ObjectId.GenerateNewId(), "Plum fiction");
@@ -38,7 +40,7 @@ namespace MongoTypeRepository.Example
 
         public Book GetById()
         {
-            return _bookRepo.GetById("1");
+            return _bookRepo.GetById(_bookId);
         }
 
         public int GetByCustomRepositoryMethod()

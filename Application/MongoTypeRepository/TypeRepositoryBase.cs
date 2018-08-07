@@ -26,8 +26,10 @@ namespace MongoTypeRepository
 
         public TypeRepositoryBase(string databaseName, string collectionName, bool isLocal)
         {
-            if(!isLocal)
-            { throw new Exception("This method can run only on local DB");}
+            if (!isLocal)
+            {
+                throw new Exception("This method can run only on local DB");
+            }
 
             MongoClient = new MongoClient();
             SetUp(databaseName, collectionName);
@@ -37,53 +39,50 @@ namespace MongoTypeRepository
         public MongoClient MongoClient { get; }
         public IMongoQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
 
-
         public Tdb GetById(string id)
+        {
+            return GetById(ObjectId.Parse(id));
+        }
+
+        public Tdb GetById(ObjectId id)
         {
             IMongoQueryable<Tdb> vystup = from obj in CollectionQuery
                 where obj.Id.Equals(id)
                 select obj;
 
-            return vystup.FirstOrDefault();
+            return vystup.SingleOrDefault();
         }
 
         /// <summary>
-        /// Replace or insert document in DB, based on _id
-        /// </summary>
-        /// <param name="objectToSave"></param>
-        public void Save(IEnumerable<Tdb> objectsToSave)
-        {
-            foreach (Tdb objectToSave in objectsToSave)
-            {
-                Save(objectToSave);
-            }
-        }       
-        
-        /// <summary>
-        /// Replace or insert document in DB
+        ///     Replace or insert document in DB
         /// </summary>
         /// <param name="objectToSave"></param>
         public void Save(Tdb objectToSave)
         {
+            if (objectToSave.Id == ObjectId.Empty)
+            {
+                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
+            }
+
             FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
             var updateOptions = new UpdateOptions { IsUpsert = true }; // update or insert / upsert
             Collection.ReplaceOne(filter, objectToSave, updateOptions);
         }
 
         /// <summary>
-        /// Replaces documents in DB, based on _id
+        ///     Replaces documents in DB, based on _id
         /// </summary>
         /// <param name="objectsToSave"></param>
         public void Update(IEnumerable<Tdb> objectsToSave)
         {
             foreach (Tdb obj in objectsToSave)
             {
-               Update(obj);
+                Update(obj);
             }
         }
 
         /// <summary>
-        /// Replaces document in DB, based on _id
+        ///     Replaces document in DB, based on _id
         /// </summary>
         /// <param name="objectsToSave"></param>
         public void Update(Tdb objectToSave)
@@ -92,7 +91,6 @@ namespace MongoTypeRepository
             var updateOptions = new UpdateOptions { IsUpsert = false }; // update or insert / upsert
             Collection.ReplaceOne(filter, objectToSave, updateOptions);
         }
-
 
         public void Insert(Tdb item)
         {
@@ -127,7 +125,7 @@ namespace MongoTypeRepository
         }
 
         public List<Tdb> GetPagedResults(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
-        { 
+        {
             var fb = new FilterDefinitionBuilder<Tdb>();
             FilterDefinition<Tdb> totalFilter = primaryFilters ?? Builders<Tdb>.Filter.Empty; // or maybe  JsonFilterDefinition<Tdb>.Empty
 
@@ -219,7 +217,7 @@ namespace MongoTypeRepository
 
                 filtered = filtered.Sort(sort);
             }
-            
+
             if (paging.CurrentPage < 1)
             {
                 paging.CurrentPage = 1;
@@ -235,8 +233,20 @@ namespace MongoTypeRepository
 
             totalTask.Wait();
             paging.TotalItems = totalTask.Result;
-            
+
             return items;
+        }
+
+        /// <summary>
+        ///     Replace or insert document in DB, based on _id
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public void Save(IEnumerable<Tdb> objectsToSave)
+        {
+            foreach (Tdb objectToSave in objectsToSave)
+            {
+                Save(objectToSave);
+            }
         }
 
         private void SetUp(string databaseName, string collectionName)
