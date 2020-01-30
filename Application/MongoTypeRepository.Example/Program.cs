@@ -1,30 +1,26 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using MongoDB.Bson;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
-using MongoTypeRepository.Example.CustomRepositories;
-using MongoTypeRepository.Example.DataModel;
 
 namespace MongoTypeRepository.Example
 {
     internal class Program
     {
 
-
-        private static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             Console.WriteLine("Creating repository book");
             var bookExample = new BookExample();
             Console.WriteLine();
 
             Console.WriteLine("Saving books to DB");
-            bookExample.CreateBooks();
+            await bookExample.CreateBooks();
             Console.WriteLine();
 
-
             Console.WriteLine("Getting item from DB by ID");
-            Console.WriteLine(bookExample.GetById().ToJson());
+            Console.WriteLine((await bookExample.GetById()).ToJson());
             Console.WriteLine();
 
             Console.WriteLine("Getting item names from DB by Linq");
@@ -32,7 +28,7 @@ namespace MongoTypeRepository.Example
             Console.WriteLine();
 
             Console.WriteLine("Getting item from DB by custom repository method");
-            Console.WriteLine(bookExample.GetByCustomRepositoryMethod());
+            Console.WriteLine(await bookExample.GetByCustomRepositoryMethod());
             Console.WriteLine();
 
             // Do not forget, to check how wrapped objects works
@@ -41,17 +37,24 @@ namespace MongoTypeRepository.Example
             Console.WriteLine();
 
             Console.WriteLine("Saving AlienShips to DB");
-            alienShipExample.CreateShip();
+            await alienShipExample.CreateShip();
             Console.WriteLine();
 
             Console.WriteLine("Getting item from DB by custom repository method");
             Console.WriteLine(alienShipExample.GetByCustomRepositoryMethod().ToJson());
             Console.WriteLine();
+
+
+            Console.WriteLine("1000 async saves");
+            Stopwatch stop = new Stopwatch();
+            stop.Start();
+            await bookExample.CreateBooks(1000);
+            stop.Stop();
+            Console.WriteLine("1000 async saves done in " + stop.Elapsed);
+
+
             Console.WriteLine("press key...");
             Console.ReadKey();
-
         }
-
-
     }
 }

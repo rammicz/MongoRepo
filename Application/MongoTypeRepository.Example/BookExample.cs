@@ -19,33 +19,45 @@ namespace MongoTypeRepository.Example
             _bookRepo = new BooksRepository();
         }
 
-        public void CreateBooks()
+        public async Task CreateBooks()
         {
             _bookId = ObjectId.GenerateNewId();
             Book book = CreateBook(_bookId, "Strongly typed repository");
-            _bookRepo.Save(book);
+            await _bookRepo.SaveAsync(book);
 
             Book book2 = CreateBook(ObjectId.GenerateNewId(), "Plum fiction");
-            _bookRepo.Save(book2);
+            await _bookRepo.SaveAsync(book2);
+        }
+
+        public async Task CreateBooks(int booksToCreate)
+        {
+            List<Book> books = new List<Book>(booksToCreate);
+
+            for (int counter = 0; counter++ < booksToCreate;)
+            {
+                books.Add(CreateBook(ObjectId.GenerateNewId(), "Plum fiction " + counter));
+            }
+
+            await _bookRepo.SaveAsync(books);
         }
 
         public IQueryable<string> GetByLinq()
         {
             var bookResults = from book in _bookRepo.CollectionQuery
-                              where book.Author == "Jiri Hernik"
-                              select book.Name;
+                where book.Author == "Jiri Hernik"
+                select book.Name;
 
             return bookResults;
         }
 
-        public Book GetById()
+        public async Task<Book> GetById()
         {
-            return _bookRepo.GetById(_bookId);
+            return await _bookRepo.GetByIdAsync(_bookId);
         }
 
-        public int GetByCustomRepositoryMethod()
+        public async Task<int> GetByCustomRepositoryMethod()
         {
-            return _bookRepo.GetBookCount();
+            return await _bookRepo.GetBookCountAsync();
         }
 
         private static Book CreateBook(ObjectId id, string name)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoTypeRepository.Example.CustomRepositories;
 using MongoTypeRepository.Example.DataModel;
@@ -15,7 +16,7 @@ namespace MongoTypeRepository.Example
             _alienRepo = new AlienShipsRepository();
         }
 
-        public void CreateShip()
+        public async Task CreateShip()
         {
             var alienShip = new AlienShip
             {
@@ -33,12 +34,12 @@ namespace MongoTypeRepository.Example
 
             var shipForDb = new WrappedAlienShip(alienShip);
 
-            _alienRepo.Save(shipForDb);
+            await _alienRepo.SaveAsync(shipForDb);
         }
 
-        public WrappedAlienShip GetByCustomRepositoryMethod()
+        public async Task<WrappedAlienShip> GetByCustomRepositoryMethod()
         {
-            return _alienRepo.CustomGetAlienShip();
+            return await _alienRepo.CustomGetAlienShip();
         }
 
         private static Book CreateBook(ObjectId id, string name)

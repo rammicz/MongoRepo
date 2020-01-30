@@ -14,12 +14,9 @@ namespace MongoTypeRepository.Example.CustomRepositories
         /// <summary>
         ///     This method is only for demo purposes
         /// </summary>
-        public int GetBookCount()
+        public async Task<int> GetBookCountAsync()
         {
-            Task<int> result = CollectionQuery.CountAsync();
-
-            result.Wait();
-            return result.Result;
+            return await CollectionQuery.CountAsync();
         }
     }
 }

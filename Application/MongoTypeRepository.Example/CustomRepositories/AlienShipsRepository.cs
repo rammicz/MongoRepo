@@ -1,4 +1,5 @@
 ﻿using System.Configuration;
+using System.Threading.Tasks;
 using MongoDB.Driver;
 using MongoTypeRepository.Example.DataModel;
 
@@ -15,13 +16,13 @@ namespace MongoTypeRepository.Example.CustomRepositories
         ///     demo only
         /// </summary>
         /// <returns></returns>
-        public WrappedAlienShip CustomGetAlienShip()
+        public async Task<WrappedAlienShip> CustomGetAlienShip()
         {
             FilterDefinitionBuilder<WrappedAlienShip> filterBuilder = Builders<WrappedAlienShip>.Filter;
 
             FilterDefinition<WrappedAlienShip> filter = filterBuilder.Eq("Item.Crew.Name", "Dracula") & filterBuilder.Lte("YouCanDefineMorePropsHere", 10);
 
-            return Collection.Find(filter).First();
+            return await Collection.Find(filter).FirstAsync();
         }
     }
 }

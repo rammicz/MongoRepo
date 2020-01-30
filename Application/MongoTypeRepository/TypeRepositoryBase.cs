@@ -11,20 +11,51 @@ namespace MongoTypeRepository
 {
     public abstract class TypeRepositoryBase<Tdb> : ITypeRepositoryBase<Tdb> where Tdb : IMongoItem
     {
-        public TypeRepositoryBase(MongoUrl url, string collectionName)
+        /// <summary>
+        /// Creates a TypeRepository and connects do DB
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="collectionName"></param>
+        /// <param name="concurentTaskLimit">How many tasks can call DB concurrently
+        ///  0 = half of the current connection pool
+        /// -1 = no throttling at all.
+        ///  n = number of concurent calls
+        /// </param>
+        public TypeRepositoryBase(MongoUrl url, string collectionName, int concurentTaskLimit = 0)
         {
             MongoClient = new MongoClient(url);
-            SetUp(url.DatabaseName, collectionName);
+            SetUp(url.DatabaseName, collectionName, concurentTaskLimit);
         }
 
-        public TypeRepositoryBase(string connectionString, string collectionName)
+        /// <summary>
+        /// Creates a TypeRepository and connects do DB
+        /// </summary>
+        /// <param name="connectionString"></param>
+        /// <param name="collectionName"></param>
+        /// <param name="concurentTaskLimit">How many tasks can call DB concurrently
+        ///  0 = half of the current connection pool
+        /// -1 = no throttling at all.
+        ///  n = number of concurent calls
+        /// </param>
+        public TypeRepositoryBase(string connectionString, string collectionName, int concurentTaskLimit = 0)
         {
             MongoUrl url = MongoUrl.Create(connectionString);
             MongoClient = new MongoClient(connectionString);
-            SetUp(url.DatabaseName, collectionName);
+            SetUp(url.DatabaseName, collectionName, concurentTaskLimit);
         }
 
-        public TypeRepositoryBase(string databaseName, string collectionName, bool isLocal)
+        /// <summary>
+        /// Creates a TypeRepository and connects do local DB
+        /// </summary>
+        /// <param name="databaseName"></param>
+        /// <param name="collectionName"></param>
+        /// <param name="isLocal"></param>
+        /// <param name="concurentTaskLimit">How many tasks can call DB concurrently
+        ///  0 = half of the current connection pool
+        /// -1 = no throttling at all.
+        ///  n = number of concurent calls
+        /// </param>
+        public TypeRepositoryBase(string databaseName, string collectionName, bool isLocal, int concurentTaskLimit = 0)
         {
             if (!isLocal)
             {
@@ -32,7 +63,7 @@ namespace MongoTypeRepository
             }
 
             MongoClient = new MongoClient();
-            SetUp(databaseName, collectionName);
+            SetUp(databaseName, collectionName, concurentTaskLimit);
         }
 
         public IMongoCollection<Tdb> Collection { get; private set; }
@@ -46,27 +77,8 @@ namespace MongoTypeRepository
 
         public Tdb GetById(ObjectId id)
         {
-            IMongoQueryable<Tdb> vystup = from obj in CollectionQuery
-                where obj.Id.Equals(id)
-                select obj;
-
-            return vystup.SingleOrDefault();
-        }
-
-        /// <summary>
-        ///     Replace or insert document in DB
-        /// </summary>
-        /// <param name="objectToSave"></param>
-        public void Save(Tdb objectToSave)
-        {
-            if (objectToSave.Id == ObjectId.Empty)
-            {
-                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
-            }
-
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
-            var updateOptions = new UpdateOptions { IsUpsert = true }; // update or insert / upsert
-            Collection.ReplaceOne(filter, objectToSave, updateOptions);
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+            return Collection.Find(filter).SingleOrDefault();
         }
 
         /// <summary>
@@ -84,12 +96,12 @@ namespace MongoTypeRepository
         /// <summary>
         ///     Replaces document in DB, based on _id
         /// </summary>
-        /// <param name="objectsToSave"></param>
-        public void Update(Tdb objectToSave)
+        /// <param name="objectToSave"></param>
+        public ReplaceOneResult Update(Tdb objectToSave)
         {
             FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
-            var updateOptions = new UpdateOptions { IsUpsert = false }; // update or insert / upsert
-            Collection.ReplaceOne(filter, objectToSave, updateOptions);
+            var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
+            return Collection.ReplaceOne(filter, objectToSave, updateOptions);
         }
 
         public void Insert(Tdb item)
@@ -119,12 +131,200 @@ namespace MongoTypeRepository
             Collection.DeleteOne(filter);
         }
 
-        public void DeleteAll()
+        public DeleteResult DeleteAll()
         {
-            Collection.DeleteMany(FilterDefinition<Tdb>.Empty);
+            return Collection.DeleteMany(FilterDefinition<Tdb>.Empty);
         }
 
         public List<Tdb> GetPagedResults(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
+        {
+            SetPaging(paging);
+
+            FilterDefinition<Tdb> totalFilter = PreparePagingFilter(primaryFilters, paging);
+
+            IFindFluent<Tdb, Tdb> filtered = Collection.Find(totalFilter);
+
+            paging.TotalItems = filtered.CountDocuments();
+
+            var sort = SetSorting(paging);
+
+            filtered = filtered.Sort(sort);
+
+            // runs over cursor in MongoDb
+            List<Tdb> items = filtered.Skip((paging.CurrentPage - 1) * paging.PageSize).Limit(paging.PageSize).ToList();
+
+            return items;
+        }
+
+        /// <summary>
+        ///     Replace or insert document in DB
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public void Save(Tdb objectToSave)
+        {
+            if (objectToSave.Id == ObjectId.Empty)
+            {
+                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
+            }
+
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            var updateOptions = new ReplaceOptions { IsUpsert = true }; // update or insert / upsert
+            Collection.ReplaceOne(filter, objectToSave, updateOptions);
+        }
+
+        public async Task<Tdb> GetByIdAsync(string id)
+        {
+            return await GetByIdAsync(ObjectId.Parse(id));
+        }
+
+        public async Task<Tdb> GetByIdAsync(ObjectId id)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+            return (await Collection.FindAsync(filter)).SingleOrDefault();
+        }
+
+        /// <summary>
+        ///     Replace or insert documents in DB, based on _id
+        /// </summary>
+        /// <param name="objectsToSave"></param>
+        public void Save(IEnumerable<Tdb> objectsToSave)
+        {
+            foreach (Tdb objectToSave in objectsToSave)
+            {
+                Save(objectToSave);
+            }
+        }
+
+        /// <summary>
+        ///     Replace or insert documents in DB, based on _id
+        /// </summary>
+        public async Task SaveAsync(IEnumerable<Tdb> objectsToSave)
+        {
+            var tasks = objectsToSave.Select(SaveAsync);
+            await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        ///     Replace or insert document in DB
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public async Task SaveAsync(Tdb objectToSave)
+        {
+            if (objectToSave.Id == ObjectId.Empty)
+            {
+                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
+            }
+
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            var updateOptions = new ReplaceOptions { IsUpsert = true }; // update or insert / upsert
+            await Collection.ReplaceOneAsync(filter, objectToSave, updateOptions);
+        }
+
+        /// <summary>
+        ///     Replaces documents in DB, based on _id
+        /// </summary>
+        /// <param name="objectsToSave"></param>
+        public async Task UpdateAsync(IEnumerable<Tdb> objectsToSave)
+        {
+            var tasks = objectsToSave.Select(UpdateAsync);
+            await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        ///     Replaces document in DB, based on _id
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public async Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
+            return await Collection.ReplaceOneAsync(filter, objectToSave, updateOptions);
+        }
+
+        public async void InsertAsync(Tdb item)
+        {
+            await Collection.InsertOneAsync(item);
+        }
+
+        public async Task InsertAsync(IEnumerable<Tdb> items)
+        {
+            await Collection.InsertManyAsync(items);
+        }
+
+        public async Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete)
+        {
+            return await DeleteAsync(objectToDelete.Id);
+        }
+
+        public async Task<DeleteResult> DeleteAsync(string id)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+            return await Collection.DeleteOneAsync(filter);
+        }
+
+        public async Task<DeleteResult> DeleteAsync(ObjectId id)
+        {
+            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+            return await Collection.DeleteOneAsync(filter);
+        }
+
+        public async Task<DeleteResult> DeleteAllAsync()
+        {
+            return await Collection.DeleteManyAsync(FilterDefinition<Tdb>.Empty);
+        }
+
+        public async Task<List<Tdb>> GetPagedResultsAsync(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
+        {
+            SetPaging(paging);
+
+            FilterDefinition<Tdb> totalFilter = PreparePagingFilter(primaryFilters, paging);
+            var countTask = Collection.CountDocumentsAsync(totalFilter);
+
+            var sorting = SetSorting(paging);
+
+            var findOptions = new FindOptions<Tdb, Tdb> { Sort = sorting };
+            var collection = await Collection.FindAsync(totalFilter, findOptions);
+            var skip = (paging.CurrentPage - 1) * paging.PageSize;
+            var result = collection.ToEnumerable().Skip(skip).Take(paging.PageSize).ToList();
+
+            paging.TotalItems = await countTask;
+            return result;
+        }
+
+        private static void SetPaging(RepositoryPaging paging)
+        {
+            if (paging.CurrentPage < 1)
+            {
+                paging.CurrentPage = 1;
+            }
+
+            if (paging.PageSize < 1)
+            {
+                paging.PageSize = 1;
+            }
+        }
+
+        private static SortDefinition<Tdb> SetSorting(RepositoryPaging paging)
+        {
+            if (!string.IsNullOrWhiteSpace(paging.OrderBy))
+            {
+                SortDefinition<Tdb> sort;
+                if (paging.OrderDirection == Ordering.asc)
+                {
+                    sort = Builders<Tdb>.Sort.Ascending(paging.OrderBy);
+                }
+                else
+                {
+                    sort = Builders<Tdb>.Sort.Descending(paging.OrderBy);
+                }
+
+                return sort;
+            }
+
+            return null;
+        }
+
+        private static FilterDefinition<Tdb> PreparePagingFilter(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
         {
             var fb = new FilterDefinitionBuilder<Tdb>();
             FilterDefinition<Tdb> totalFilter = primaryFilters ?? Builders<Tdb>.Filter.Empty; // or maybe  JsonFilterDefinition<Tdb>.Empty
@@ -198,61 +398,28 @@ namespace MongoTypeRepository
                 }
             }
 
-            IFindFluent<Tdb, Tdb> filtered = Collection.Find(totalFilter);
+            return totalFilter;
+        }
 
-            //count is on it's own cursor, so it can work in paralel
-            Task<long> totalTask = filtered.CountAsync();
+        private void SetUp(string databaseName, string collectionName, int concurentTaskLimit = 0)
+        {
+            IMongoDatabase db = MongoClient.GetDatabase(databaseName);
 
-            if (!string.IsNullOrWhiteSpace(paging.OrderBy))
+            if (concurentTaskLimit < 1)
             {
-                SortDefinition<Tdb> sort;
-                if (paging.OrderDirection == Ordering.asc)
+                if (concurentTaskLimit == 0)
                 {
-                    sort = Builders<Tdb>.Sort.Ascending(paging.OrderBy);
+                    // default is half of the poolsize
+                    concurentTaskLimit = MongoClient.Settings.MaxConnectionPoolSize / 2;
                 }
                 else
                 {
-                    sort = Builders<Tdb>.Sort.Descending(paging.OrderBy);
+                    // No throttling if Limit is < 0
+                    Collection = db.GetCollection<Tdb>(collectionName);
                 }
-
-                filtered = filtered.Sort(sort);
             }
-
-            if (paging.CurrentPage < 1)
-            {
-                paging.CurrentPage = 1;
-            }
-
-            if (paging.PageSize < 1)
-            {
-                paging.PageSize = 1;
-            }
-
-            // runs over cursor in MongoDb
-            List<Tdb> items = filtered.Skip((paging.CurrentPage - 1) * paging.PageSize).Limit(paging.PageSize).ToList();
-
-            totalTask.Wait();
-            paging.TotalItems = totalTask.Result;
-
-            return items;
-        }
-
-        /// <summary>
-        ///     Replace or insert document in DB, based on _id
-        /// </summary>
-        /// <param name="objectToSave"></param>
-        public void Save(IEnumerable<Tdb> objectsToSave)
-        {
-            foreach (Tdb objectToSave in objectsToSave)
-            {
-                Save(objectToSave);
-            }
-        }
-
-        private void SetUp(string databaseName, string collectionName)
-        {
-            IMongoDatabase db = MongoClient.GetDatabase(databaseName);
-            Collection = db.GetCollection<Tdb>(collectionName);
+            
+            Collection = new ThrottledMongoCollection<Tdb>(db.GetCollection<Tdb>(collectionName), concurentTaskLimit);
         }
     }
 }
