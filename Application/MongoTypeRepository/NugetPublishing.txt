@@ -1,3 +1,0 @@
-﻿nuget setapikey <ApiKey from https://www.nuget.org/account>
-nuget pack Rammi.MongoTypeRepository.nuspec
-nuget push Rammi.MongoTypeRepository.version.nupkg -Source https://www.nuget.org/api/v2/package

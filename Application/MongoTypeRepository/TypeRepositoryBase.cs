@@ -416,6 +416,7 @@ namespace MongoTypeRepository
                 {
                     // No throttling if Limit is < 0
                     Collection = db.GetCollection<Tdb>(collectionName);
+                    return;
                 }
             }
             
