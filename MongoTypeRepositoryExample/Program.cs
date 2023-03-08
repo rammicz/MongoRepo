@@ -6,7 +6,7 @@ using MongoDB.Bson;
 
 namespace MongoTypeRepository.Example
 {
-    internal class Program
+    internal static class Program
     {
 
         public static async Task Main(string[] args)
