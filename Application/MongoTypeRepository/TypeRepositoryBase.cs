@@ -241,7 +241,7 @@ namespace MongoTypeRepository
             return await Collection.ReplaceOneAsync(filter, objectToSave, updateOptions);
         }
 
-        public async void InsertAsync(Tdb item)
+        public async Task InsertAsync(Tdb item)
         {
             await Collection.InsertOneAsync(item);
         }

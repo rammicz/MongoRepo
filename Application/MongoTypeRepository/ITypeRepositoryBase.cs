@@ -73,7 +73,7 @@ namespace MongoTypeRepository
         /// <param name="objectToSave"></param>
         Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave);
 
-        void InsertAsync(Tdb item);
+        Task InsertAsync(Tdb item);
         Task InsertAsync(IEnumerable<Tdb> items);
         Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete);
         Task<DeleteResult> DeleteAsync(string id);

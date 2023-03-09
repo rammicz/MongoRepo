@@ -8,10 +8,10 @@ namespace MongoTypeRepository.Example.DataModel
     /// </summary>
     public class Book : IMongoItem
     {
-        public string Name { get; set; }
-        public string Author { get; set; }
+        public string? Name { get; set; }
+        public string? Author { get; set; }
         public DateTime DatePublished { get; set; }
-        public BookChapter[] Chapters { get; set; }
+        public BookChapter[]? Chapters { get; set; }
         public ObjectId Id { get; set; }
     }
 }

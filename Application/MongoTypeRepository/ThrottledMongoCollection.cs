@@ -31,6 +31,30 @@ namespace MongoTypeRepository
         public async Task<IAsyncCursor<TResult>> AggregateAsync<TResult>(IClientSessionHandle session, PipelineDefinition<T, TResult> pipeline, AggregateOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.AggregateAsync(session, pipeline, options, cancellationToken));
 
+        public void AggregateToCollection<TResult>(PipelineDefinition<T, TResult> pipeline, AggregateOptions options = null,
+            CancellationToken cancellationToken = new CancellationToken())
+        {
+            _base.AggregateToCollection(pipeline, options, cancellationToken);
+        }
+
+        public void AggregateToCollection<TResult>(IClientSessionHandle session, PipelineDefinition<T, TResult> pipeline,
+            AggregateOptions options = null, CancellationToken cancellationToken = new CancellationToken())
+        {
+            _base.AggregateToCollection(session, pipeline, options, cancellationToken);
+        }
+
+        public async Task AggregateToCollectionAsync<TResult>(PipelineDefinition<T, TResult> pipeline, AggregateOptions options = null,
+            CancellationToken cancellationToken = new CancellationToken())
+        {
+            await _semaphore.AddRequest(_base.AggregateToCollectionAsync(pipeline, options, cancellationToken));
+        }
+
+        public async Task AggregateToCollectionAsync<TResult>(IClientSessionHandle session, PipelineDefinition<T, TResult> pipeline,
+            AggregateOptions options = null, CancellationToken cancellationToken = new CancellationToken())
+        {
+            await _semaphore.AddRequest(_base.AggregateToCollectionAsync(session, pipeline, options, cancellationToken));
+        }
+
         public BulkWriteResult<T> BulkWrite(IEnumerable<WriteModel<T>> requests, BulkWriteOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.BulkWrite(requests, options, cancellationToken);
 
@@ -200,6 +224,7 @@ namespace MongoTypeRepository
         public void InsertOne(IClientSessionHandle session, T document, InsertOneOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.InsertOne(session, document, options, cancellationToken);
 
+        [Obsolete("Use the new overload of InsertOneAsync with an InsertOneOptions parameter instead.")]
         public async Task InsertOneAsync(T document, CancellationToken cancellationToken) =>
             await _semaphore.AddRequest(_base.InsertOneAsync(document, cancellationToken));
 
@@ -220,16 +245,20 @@ namespace MongoTypeRepository
 
         public async Task InsertManyAsync(IClientSessionHandle session, IEnumerable<T> documents, InsertManyOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.InsertManyAsync(session, documents, options, cancellationToken));
-
+        
+        [Obsolete("Use Aggregation pipeline instead.")]
         public IAsyncCursor<TResult> MapReduce<TResult>(BsonJavaScript map, BsonJavaScript reduce, MapReduceOptions<T, TResult> options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.MapReduce(map,reduce, options, cancellationToken);
 
+        [Obsolete("Use Aggregation pipeline instead.")]
         public IAsyncCursor<TResult> MapReduce<TResult>(IClientSessionHandle session, BsonJavaScript map, BsonJavaScript reduce, MapReduceOptions<T, TResult> options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.MapReduce(session, map, reduce, options, cancellationToken);
 
+        [Obsolete("Use Aggregation pipeline instead.")]
         public async Task<IAsyncCursor<TResult>> MapReduceAsync<TResult>(BsonJavaScript map, BsonJavaScript reduce, MapReduceOptions<T, TResult> options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.MapReduceAsync(map, reduce, options, cancellationToken));
 
+        [Obsolete("Use Aggregation pipeline instead.")]
         public async Task<IAsyncCursor<TResult>> MapReduceAsync<TResult>(
             IClientSessionHandle session,
             BsonJavaScript map,
@@ -242,24 +271,28 @@ namespace MongoTypeRepository
         public ReplaceOneResult ReplaceOne(FilterDefinition<T> filter, T replacement, ReplaceOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.ReplaceOne(filter, replacement, options, cancellationToken);
 
+        [Obsolete("Use the overload that takes a ReplaceOptions instead of an UpdateOptions.")]
         public ReplaceOneResult ReplaceOne(FilterDefinition<T> filter, T replacement, UpdateOptions options, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.ReplaceOne(filter, replacement, options, cancellationToken);
 
         public ReplaceOneResult ReplaceOne(IClientSessionHandle session, FilterDefinition<T> filter, T replacement, ReplaceOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.ReplaceOne(session, filter, replacement, options, cancellationToken);
 
+        [Obsolete("Use the overload that takes a ReplaceOptions instead of an UpdateOptions.")]
         public ReplaceOneResult ReplaceOne(IClientSessionHandle session, FilterDefinition<T> filter, T replacement, UpdateOptions options, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.ReplaceOne(session, filter, replacement, options, cancellationToken);
 
         public async Task<ReplaceOneResult> ReplaceOneAsync(FilterDefinition<T> filter, T replacement, ReplaceOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.ReplaceOneAsync(filter, replacement, options, cancellationToken));
 
+        [Obsolete("Use the overload that takes a ReplaceOptions instead of an UpdateOptions.")]
         public async Task<ReplaceOneResult> ReplaceOneAsync(FilterDefinition<T> filter, T replacement, UpdateOptions options, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.ReplaceOneAsync(filter, replacement, options, cancellationToken));
 
         public async Task<ReplaceOneResult> ReplaceOneAsync(IClientSessionHandle session, FilterDefinition<T> filter, T replacement, ReplaceOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.ReplaceOneAsync(session, filter, replacement, options, cancellationToken));
 
+        [Obsolete("Use the overload that takes a ReplaceOptions instead of an UpdateOptions.")]
         public async Task<ReplaceOneResult> ReplaceOneAsync(IClientSessionHandle session, FilterDefinition<T> filter, T replacement, UpdateOptions options, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.ReplaceOneAsync(session, filter, replacement, options, cancellationToken));
 
