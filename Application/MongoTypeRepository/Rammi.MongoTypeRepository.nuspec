@@ -25,7 +25,6 @@
 		- Fixed bug in ThrottledMongoCollection Count methods
 		- Implemented EstimatedDocumentCount method
 		- Added README.md to package
-		- Removed deprecated iconUrl element
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
