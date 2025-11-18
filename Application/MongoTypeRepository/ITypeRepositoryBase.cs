@@ -1,8 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using MongoTypeRepository.Contracts;
 
 namespace MongoTypeRepository
@@ -11,7 +11,7 @@ namespace MongoTypeRepository
     {
         IMongoCollection<Tdb> Collection { get; }
         MongoClient MongoClient { get; }
-        IMongoQueryable<Tdb> CollectionQuery { get; }
+        IQueryable<Tdb> CollectionQuery { get; }
         Tdb GetById(string id);
         Tdb GetById(ObjectId id);
 

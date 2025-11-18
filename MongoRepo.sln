@@ -5,7 +5,7 @@ VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoTypeRepository", "Application\MongoTypeRepository\MongoTypeRepository.csproj", "{F90209D7-5465-47B1-AA23-2127BCE7CFF1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoTypeRepositoryExample", "MongoTypeRepositoryExample\MongoTypeRepositoryExample.csproj", "{55655E5D-E9B8-46C1-8D79-0DB4C2CAB3B0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoTypeRepositoryExample", "Application\MongoTypeRepositoryExample\MongoTypeRepositoryExample.csproj", "{55655E5D-E9B8-46C1-8D79-0DB4C2CAB3B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

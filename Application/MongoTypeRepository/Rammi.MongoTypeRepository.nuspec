@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>6.0.0</version>
+    <version>10.0.0</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -12,7 +12,7 @@
     <iconUrl>http://rammi.cz/temp/mongorepo.png</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>
-		Provides strong types and repository access for mongoDB and Azure Cosmos B, which is both weak typed.
+		Provides strong types and repository access for mongoDB and Azure Cosmos DB, which is both weak typed.
 
 		You can have all the sources with examples from here:
 		https://github.com/rammicz/MongoRepo
@@ -21,11 +21,14 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
-		- update to .net6
+		- Updated to .NET 10
+		- Updated MongoDB.Driver to 3.5.0
+		- Fixed bug in ThrottledMongoCollection Count methods
+		- Implemented EstimatedDocumentCount method
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
-      <dependency id="MongoDB.Driver" version="2.10.1" />
+      <dependency id="MongoDB.Driver" version="3.5.0" />
     </dependencies>
     <summary>
       Provides strong types (data model) and repository access for mongo DB or Azure CosmosDB
@@ -35,6 +38,6 @@
     </summary>
   </metadata>
   <files>
-    <file src="bin\release\net6.0\MongoTypeRepository.dll" target="\lib\net60" />
+    <file src="bin\release\net10.0\MongoTypeRepository.dll" target="\lib\net100" />
   </files>
-</package>ype
+</package>

@@ -33,7 +33,7 @@ namespace MongoTypeRepository.Example
         {
             List<Book> books = new List<Book>(booksToCreate);
 
-            for (int counter = 0; counter++ < booksToCreate;)
+            for (int counter = 0; counter < booksToCreate; counter++)
             {
                 books.Add(CreateBook(ObjectId.GenerateNewId(), "Plum fiction " + counter));
             }

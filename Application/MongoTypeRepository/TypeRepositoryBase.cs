@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using MongoTypeRepository.Contracts;
 
 namespace MongoTypeRepository
@@ -68,7 +67,7 @@ namespace MongoTypeRepository
 
         public IMongoCollection<Tdb> Collection { get; private set; }
         public MongoClient MongoClient { get; }
-        public IMongoQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
+        public IQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
 
         public Tdb GetById(string id)
         {

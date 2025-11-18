@@ -7,6 +7,10 @@ using MongoDB.Driver;
 
 namespace MongoTypeRepository
 {
+    // Placeholder interface for IMongoSearchIndexManager if not found in MongoDB.Driver
+    // This will be replaced by the actual type when available
+    internal interface IMongoSearchIndexManagerPlaceholder { }
+
     public class ThrottledMongoCollection<T> : IMongoCollection<T>
     {
         //is a ... and has a ...
@@ -68,10 +72,10 @@ namespace MongoTypeRepository
             await _semaphore.AddRequest(_base.BulkWriteAsync(session, requests, options, cancellationToken));
 
         public long Count(FilterDefinition<T> filter, CountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
-            Count(filter, options, cancellationToken);
+            _base.Count(filter, options, cancellationToken);
 
         public long Count(IClientSessionHandle session, FilterDefinition<T> filter, CountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
-            Count(session, filter, options, cancellationToken);
+            _base.Count(session, filter, options, cancellationToken);
 
         public async Task<long> CountAsync(FilterDefinition<T> filter, CountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.CountAsync(filter, options, cancellationToken));
@@ -144,10 +148,8 @@ namespace MongoTypeRepository
             CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.DistinctAsync(session, field, filter, options, cancellationToken));
 
-        public long EstimatedDocumentCount(EstimatedDocumentCountOptions options = null, CancellationToken cancellationToken = new CancellationToken())
-        {
-            throw new System.NotImplementedException();
-        }
+        public long EstimatedDocumentCount(EstimatedDocumentCountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
+            _base.EstimatedDocumentCount(options, cancellationToken);
 
         public async Task<long> EstimatedDocumentCountAsync(EstimatedDocumentCountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.EstimatedDocumentCountAsync(options, cancellationToken));
