@@ -16,7 +16,7 @@ namespace MongoTypeRepository.Example.CustomRepositories
         /// </summary>
         public async Task<int> GetBookCountAsync()
         {
-            return await ((MongoDB.Driver.Linq.IMongoQueryable<Book>)CollectionQuery).CountAsync();
+            return await CollectionQuery.CountAsync();
         }
     }
 }

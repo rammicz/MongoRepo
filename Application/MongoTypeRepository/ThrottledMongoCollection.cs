@@ -1,17 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using MongoDB.Driver.Search;
 
 namespace MongoTypeRepository
 {
-    // Placeholder interface for IMongoSearchIndexManager if not found in MongoDB.Driver
-    // This will be replaced by the actual type when available
-    internal interface IMongoSearchIndexManagerPlaceholder { }
-
-    public class ThrottledMongoCollection<T> : IMongoCollection<T>
+    public partial class ThrottledMongoCollection<T> : IMongoCollection<T>
     {
         //is a ... and has a ...
         private readonly IMongoCollection<T> _base;
@@ -19,7 +17,7 @@ namespace MongoTypeRepository
 
         public ThrottledMongoCollection(IMongoCollection<T> baseCollection, int connectionLimit)
         {
-            _base = baseCollection;
+            _base = baseCollection ?? throw new ArgumentNullException(nameof(baseCollection));
             _semaphore = new ThrottlingSemaphore(connectionLimit, connectionLimit);
         }
 
@@ -147,6 +145,18 @@ namespace MongoTypeRepository
             DistinctOptions options = null,
             CancellationToken cancellationToken = new CancellationToken()) =>
             await _semaphore.AddRequest(_base.DistinctAsync(session, field, filter, options, cancellationToken));
+
+        public IAsyncCursor<TItem> DistinctMany<TItem>(FieldDefinition<T, IEnumerable<TItem>> field, FilterDefinition<T> filter, DistinctOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
+            _base.DistinctMany(field, filter, options, cancellationToken);
+
+        public IAsyncCursor<TItem> DistinctMany<TItem>(IClientSessionHandle session, FieldDefinition<T, IEnumerable<TItem>> field, FilterDefinition<T> filter, DistinctOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
+            _base.DistinctMany(session, field, filter, options, cancellationToken);
+
+        public async Task<IAsyncCursor<TItem>> DistinctManyAsync<TItem>(FieldDefinition<T, IEnumerable<TItem>> field, FilterDefinition<T> filter, DistinctOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
+            await _semaphore.AddRequest(_base.DistinctManyAsync(field, filter, options, cancellationToken));
+
+        public async Task<IAsyncCursor<TItem>> DistinctManyAsync<TItem>(IClientSessionHandle session, FieldDefinition<T, IEnumerable<TItem>> field, FilterDefinition<T> filter, DistinctOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
+            await _semaphore.AddRequest(_base.DistinctManyAsync(session, field, filter, options, cancellationToken));
 
         public long EstimatedDocumentCount(EstimatedDocumentCountOptions options = null, CancellationToken cancellationToken = new CancellationToken()) =>
             _base.EstimatedDocumentCount(options, cancellationToken);
@@ -352,5 +362,8 @@ namespace MongoTypeRepository
         public IBsonSerializer<T> DocumentSerializer => _base.DocumentSerializer;
         public IMongoIndexManager<T> Indexes => _base.Indexes;
         public MongoCollectionSettings Settings => _base.Settings;
+        public IMongoSearchIndexManager SearchIndexes => _base.SearchIndexes;
+
+        IMongoSearchIndexManager IMongoCollection<T>.SearchIndexes => _base.SearchIndexes;
     }
 }

@@ -41,7 +41,7 @@ namespace MongoTypeRepository.Example
             Console.WriteLine();
 
             Console.WriteLine("Getting item from DB by custom repository method");
-            Console.WriteLine(alienShipExample.GetByCustomRepositoryMethod().ToJson());
+            Console.WriteLine((await alienShipExample.GetByCustomRepositoryMethod()).ToJson());
             Console.WriteLine();
 
 
@@ -51,7 +51,6 @@ namespace MongoTypeRepository.Example
             await bookExample.CreateBooks(1000);
             stop.Stop();
             Console.WriteLine("1000 async saves done in " + stop.Elapsed);
-
 
             Console.WriteLine("press key...");
             Console.ReadKey();
