@@ -1,16 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>net48;net8.0;net9.0;net10.0;netstandard2.1</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>10.0.3</AssemblyVersion>
-    <FileVersion>10.0.3</FileVersion>
-	  <Version>10.0.3</Version>
+    <AssemblyVersion>10.0.7</AssemblyVersion>
+    <FileVersion>10.0.7</FileVersion>
+	  <Version>10.0.7</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Bson" Version="3.5.0" />
-    <PackageReference Include="MongoDB.Driver" Version="3.5.0" />
+    <PackageReference Include="MongoDB.Bson" Version="3.5.2" />
+    <PackageReference Include="MongoDB.Driver" Version="3.5.2" />
   </ItemGroup>
 
   <ItemGroup>
