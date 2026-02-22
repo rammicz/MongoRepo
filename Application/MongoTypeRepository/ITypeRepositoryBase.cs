@@ -44,6 +44,13 @@ namespace MongoTypeRepository
         Task<Tdb> GetByIdAsync(string id);
         Task<Tdb> GetByIdAsync(ObjectId id);
 
+        List<Tdb> Find(FilterDefinition<Tdb> filter);
+        List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort);
+        List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit);
+
         /// <summary>
         ///     Replace or insert documents in DB, based on _id
         /// </summary>

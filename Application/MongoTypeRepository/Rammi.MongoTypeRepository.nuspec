@@ -25,7 +25,21 @@
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
-      <dependency id="MongoDB.Driver" version="3.5.2" />
+      <group targetFramework="net48">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
+      <group targetFramework="net8.0">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
+      <group targetFramework="net9.0">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
+      <group targetFramework="net10.0">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
+      <group targetFramework="netstandard2.1">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
     </dependencies>
     <summary>
       Provides strong types (data model) and repository access for mongo DB or Azure CosmosDB

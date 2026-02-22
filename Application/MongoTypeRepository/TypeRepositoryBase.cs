@@ -182,6 +182,61 @@ namespace MongoTypeRepository
             return (await Collection.FindAsync(filter)).SingleOrDefault();
         }
 
+        public List<Tdb> Find(FilterDefinition<Tdb> filter)
+        {
+            return Find(filter, null, null);
+        }
+
+        public List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort)
+        {
+            return Find(filter, sort, null);
+        }
+
+        public List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit)
+        {
+            var query = Collection.Find(filter ?? FilterDefinition<Tdb>.Empty);
+
+            if (sort != null)
+            {
+                query = query.Sort(sort);
+            }
+
+            if (limit.HasValue)
+            {
+                query = query.Limit(limit.Value);
+            }
+
+            return query.ToList();
+        }
+
+        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter)
+        {
+            return FindAsync(filter, null, null);
+        }
+
+        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort)
+        {
+            return FindAsync(filter, sort, null);
+        }
+
+        public async Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit)
+        {
+            var options = new FindOptions<Tdb, Tdb>();
+
+            if (sort != null)
+            {
+                options.Sort = sort;
+            }
+
+            if (limit.HasValue)
+            {
+                options.Limit = limit.Value;
+            }
+
+            var cursor = await Collection.FindAsync(filter ?? FilterDefinition<Tdb>.Empty, options);
+            return await cursor.ToListAsync();
+        }
+
         /// <summary>
         ///     Replace or insert documents in DB, based on _id
         /// </summary>
