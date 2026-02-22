@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>10.0.7</version>
+    <version>10.0.8</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -21,7 +21,8 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
-		- Updated MongoDB.Driver to 3.5.2
+		- Added Find/FindAsync overloads with FilterDefinition, SortDefinition and limit
+		- Fixed nuspec dependency groups per target framework
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
