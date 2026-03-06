@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,6 +9,17 @@ using MongoTypeRepository.Contracts;
 
 namespace MongoTypeRepository
 {
+    internal static class MongoClientCache
+    {
+        private static readonly ConcurrentDictionary<string, MongoClient> Clients
+            = new ConcurrentDictionary<string, MongoClient>();
+
+        internal static MongoClient GetOrCreate(string key, Func<MongoClient> factory)
+        {
+            return Clients.GetOrAdd(key, _ => factory());
+        }
+    }
+
     public abstract class TypeRepositoryBase<Tdb> : ITypeRepositoryBase<Tdb> where Tdb : IMongoItem
     {
         /// <summary>
@@ -22,7 +34,7 @@ namespace MongoTypeRepository
         /// </param>
         public TypeRepositoryBase(MongoUrl url, string collectionName, int concurentTaskLimit = 0)
         {
-            MongoClient = new MongoClient(url);
+            MongoClient = MongoClientCache.GetOrCreate(url.ToString(), () => new MongoClient(url));
             SetUp(url.DatabaseName, collectionName, concurentTaskLimit);
         }
 
@@ -39,7 +51,7 @@ namespace MongoTypeRepository
         public TypeRepositoryBase(string connectionString, string collectionName, int concurentTaskLimit = 0)
         {
             MongoUrl url = MongoUrl.Create(connectionString);
-            MongoClient = new MongoClient(connectionString);
+            MongoClient = MongoClientCache.GetOrCreate(connectionString, () => new MongoClient(connectionString));
             SetUp(url.DatabaseName, collectionName, concurentTaskLimit);
         }
 
@@ -61,7 +73,7 @@ namespace MongoTypeRepository
                 throw new Exception("This method can run only on local DB");
             }
 
-            MongoClient = new MongoClient();
+            MongoClient = MongoClientCache.GetOrCreate("__local__", () => new MongoClient());
             SetUp(databaseName, collectionName, concurentTaskLimit);
         }
 
