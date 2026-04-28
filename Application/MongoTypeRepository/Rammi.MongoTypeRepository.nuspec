@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>10.0.9</version>
+    <version>10.0.10</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -21,8 +21,7 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
-		- Cache MongoClient per connection string (one client per unique connection)
-		- Added Find/FindAsync overloads with FilterDefinition, SortDefinition and limit
+		- Fix: Delete(string) and DeleteAsync(string) silently no-op'd because the _id filter was built as a string instead of an ObjectId. Both overloads now parse to ObjectId before delegating to the working overload.
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>

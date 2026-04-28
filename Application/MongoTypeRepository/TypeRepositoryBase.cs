@@ -132,8 +132,9 @@ namespace MongoTypeRepository
 
         public void Delete(string id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            Collection.DeleteOne(filter);
+            // Parse to ObjectId first - the _id field is stored as ObjectId, so
+            // a raw string filter would never match (silent no-op).
+            Delete(ObjectId.Parse(id));
         }
 
         public void Delete(ObjectId id)
@@ -324,8 +325,9 @@ namespace MongoTypeRepository
 
         public async Task<DeleteResult> DeleteAsync(string id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            return await Collection.DeleteOneAsync(filter);
+            // Parse to ObjectId first - the _id field is stored as ObjectId, so
+            // a raw string filter would never match (silent no-op).
+            return await DeleteAsync(ObjectId.Parse(id));
         }
 
         public async Task<DeleteResult> DeleteAsync(ObjectId id)
