@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>10.0.10</version>
+    <version>10.0.11</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -21,7 +21,7 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
-		- Fix: Delete(string) and DeleteAsync(string) silently no-op'd because the _id filter was built as a string instead of an ObjectId. Both overloads now parse to ObjectId before delegating to the working overload.
+		- Add native net10.0 and net472 build targets. The package now supports .NET Framework 4.7.2/4.8/4.8.1 (net472), .NET Core 3.x / .NET 5-7 / Mono / Xamarin (netstandard2.1), .NET 8, and .NET 10.
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
@@ -32,6 +32,9 @@
         <dependency id="MongoDB.Driver" version="3.5.2" />
       </group>
       <group targetFramework=".NETStandard2.1">
+        <dependency id="MongoDB.Driver" version="3.5.2" />
+      </group>
+      <group targetFramework="net472">
         <dependency id="MongoDB.Driver" version="3.5.2" />
       </group>
     </dependencies>
@@ -46,6 +49,7 @@
     <file src="bin/Release/net10.0/MongoTypeRepository.dll" target="lib/net10.0" />
     <file src="bin/Release/net8.0/MongoTypeRepository.dll" target="lib/net8.0" />
     <file src="bin/Release/netstandard2.1/MongoTypeRepository.dll" target="lib/netstandard2.1" />
+    <file src="bin/Release/net472/MongoTypeRepository.dll" target="lib/net472" />
     <file src="README.md" target="docs\" />
   </files>
 </package>

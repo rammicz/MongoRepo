@@ -1,18 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net8.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net10.0;net8.0;netstandard2.1;net472</TargetFrameworks>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
-    <AssemblyVersion>10.0.10</AssemblyVersion>
-    <FileVersion>10.0.10</FileVersion>
-	  <Version>10.0.10</Version>
+    <AssemblyVersion>10.0.11</AssemblyVersion>
+    <FileVersion>10.0.11</FileVersion>
+	  <Version>10.0.11</Version>
     <NuspecFile>Rammi.MongoTypeRepository.nuspec</NuspecFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="MongoDB.Bson" Version="3.5.2" />
     <PackageReference Include="MongoDB.Driver" Version="3.5.2" />
+  </ItemGroup>
+
+  <!-- Enables building the net472 target on non-Windows (build-time only, not a package dependency) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
