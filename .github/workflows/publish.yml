@@ -1,0 +1,51 @@
+name: Publish to NuGet
+
+# Publishes Rammi.MongoTypeRepository to nuget.org using Trusted Publishing
+# (OIDC). No API key secret is stored: GitHub's OIDC token is exchanged for a
+# short-lived NuGet API key at publish time via the NuGet/login action.
+#
+# Trusted Publishing policy on nuget.org must match:
+#   Repository owner : rammicz
+#   Repository       : MongoRepo
+#   Workflow file    : publish.yml
+#   Environment      : nuget
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      id-token: write   # required for Trusted Publishing (OIDC)
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: NuGet login (Trusted Publishing)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: rammi
+
+      - name: Pack
+        run: dotnet pack Application/MongoTypeRepository/MongoTypeRepository.csproj -c Release
+
+      - name: Push
+        run: >
+          dotnet nuget push
+          Application/MongoTypeRepository/bin/Release/Rammi.MongoTypeRepository.*.nupkg
+          --api-key ${{ steps.login.outputs.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
