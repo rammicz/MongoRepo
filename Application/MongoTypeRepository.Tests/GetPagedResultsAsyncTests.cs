@@ -27,11 +27,7 @@ namespace MongoTypeRepository.Tests
             Assert.Equal(20, captured!.Limit);
         }
 
-        // Sibling pin on the sync path so the two implementations can't diverge
-        // again. The sync GetPagedResults goes through the IFindFluent built by
-        // Collection.Find(...).Sort(...).Skip(...).Limit(...).ToList(), which
-        // materializes by calling IMongoCollection.FindSync with an assembled
-        // FindOptions<TestItem, TestItem> carrying the same Skip/Limit.
+        // Sibling pin on the sync path so the two implementations can't diverge again.
         [Fact]
         public void GetPagedResults_AppliesSkipAndLimitServerSide()
         {

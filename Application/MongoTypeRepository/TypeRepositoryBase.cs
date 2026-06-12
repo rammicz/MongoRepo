@@ -175,7 +175,7 @@ namespace MongoTypeRepository
             filtered = filtered.Sort(sort);
 
             // runs over cursor in MongoDb
-            List<Tdb> items = filtered.Skip((paging.CurrentPage - 1) * paging.PageSize).Limit(paging.PageSize).ToList();
+            List<Tdb> items = filtered.Skip(GetSkip(paging)).Limit(paging.PageSize).ToList();
 
             return items;
         }
@@ -362,19 +362,17 @@ namespace MongoTypeRepository
 
             var sorting = SetSorting(paging);
 
+            // Server-side skip/limit: only the requested page is transferred and deserialized.
             var findOptions = new FindOptions<Tdb, Tdb>
             {
                 Sort = sorting,
-                Skip = (paging.CurrentPage - 1) * paging.PageSize,
+                Skip = GetSkip(paging),
                 Limit = paging.PageSize,
             };
 
-            // Server-side skip/limit: only the requested page is transferred and
-            // deserialized (mirrors the sync GetPagedResults .Skip().Limit() path).
             var cursor = await Collection.FindAsync(totalFilter, findOptions);
             var result = await cursor.ToListAsync();
 
-            // TotalItems reflects the full filtered set, independent of skip/limit.
             paging.TotalItems = await countTask;
             return result;
         }
@@ -390,6 +388,11 @@ namespace MongoTypeRepository
             {
                 paging.PageSize = 1;
             }
+        }
+
+        private static int GetSkip(RepositoryPaging paging)
+        {
+            return (paging.CurrentPage - 1) * paging.PageSize;
         }
 
         private static SortDefinition<Tdb> SetSorting(RepositoryPaging paging)
