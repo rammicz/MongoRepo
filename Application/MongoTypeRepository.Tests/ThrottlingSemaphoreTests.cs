@@ -8,7 +8,7 @@ namespace MongoTypeRepository.Tests
 {
     public class ThrottlingSemaphoreTests
     {
-        [Fact(Skip = "red: throttling is a no-op (hot task starts before WaitAsync)")]
+        [Fact]
         public async Task AddRequest_LimitsConcurrentExecution()
         {
             var semaphore = new ThrottlingSemaphore(2, 2);
@@ -25,7 +25,7 @@ namespace MongoTypeRepository.Tests
             Assert.True(maxObserved <= 2, $"observed {maxObserved} concurrent operations, limit is 2");
         }
 
-        [Fact(Skip = "red: faulted task leaks a permit (no try/finally)")]
+        [Fact]
         public async Task AddRequest_ReleasesPermitWhenOperationFaults()
         {
             var semaphore = new ThrottlingSemaphore(1, 1);
@@ -34,6 +34,42 @@ namespace MongoTypeRepository.Tests
             var followUp = semaphore.AddRequest(() => Task.CompletedTask);
             var completed = await Task.WhenAny(followUp, Task.Delay(1000)) == followUp;
             Assert.True(completed, "permit leaked - semaphore deadlocked after a faulted operation");
+        }
+
+        [Fact]
+        public async Task AddRequest_ReleasesPermitWhenFactoryThrowsSynchronously()
+        {
+            var semaphore = new ThrottlingSemaphore(1, 1);
+            await Assert.ThrowsAsync<InvalidOperationException>(
+                () => semaphore.AddRequest(() => throw new InvalidOperationException("boom")));
+            var followUp = semaphore.AddRequest(() => Task.CompletedTask);
+            var completed = await Task.WhenAny(followUp, Task.Delay(1000)) == followUp;
+            Assert.True(completed, "permit leaked - semaphore deadlocked after a synchronously-throwing factory");
+        }
+
+        [Fact]
+        public async Task AddRequest_FactoryNotInvokedUntilPermitAcquired()
+        {
+            var semaphore = new ThrottlingSemaphore(1, 1);
+            // Hold the only permit with a never-completing operation.
+            var blocker = new TaskCompletionSource<bool>();
+            _ = semaphore.AddRequest(() => blocker.Task);
+            await Task.Yield();
+
+            var factoryInvoked = false;
+            var queued = semaphore.AddRequest(() =>
+            {
+                factoryInvoked = true;
+                return Task.CompletedTask;
+            });
+
+            // The permit is held, so the queued factory must not have run yet.
+            await Task.Delay(50);
+            Assert.False(factoryInvoked, "factory ran before the permit was acquired (throttling is a no-op)");
+
+            blocker.SetResult(true);
+            await queued;
+            Assert.True(factoryInvoked);
         }
     }
 }

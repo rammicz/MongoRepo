@@ -17,35 +17,30 @@ namespace MongoTypeRepository
         {
         }
 
-        public async Task<T> AddRequest<T>(Task<T> task)
+        public async Task<T> AddRequest<T>(Func<Task<T>> taskFactory)
         {
             await this.WaitAsync();
-            var result = await task;
-            this.Release();
-
-            return result;
+            try
+            {
+                return await taskFactory();
+            }
+            finally
+            {
+                this.Release();
+            }
         }
 
-        public async Task AddRequest(Task task)
+        public async Task AddRequest(Func<Task> taskFactory)
         {
             await this.WaitAsync();
-            await task;
-            this.Release();
-        }
-
-        // Func-based overloads: these exist as a compile-time seam so the
-        // sibling test specs (#9) can be written against the planned API.
-        // NOTE: semantics intentionally mirror the existing hot-task overloads
-        // (the factory is invoked eagerly, before WaitAsync) so this does NOT
-        // fix the throttling no-op bug tracked by #9 - that is its own issue.
-        public Task<T> AddRequest<T>(Func<Task<T>> taskFactory)
-        {
-            return AddRequest(taskFactory());
-        }
-
-        public Task AddRequest(Func<Task> taskFactory)
-        {
-            return AddRequest(taskFactory());
+            try
+            {
+                await taskFactory();
+            }
+            finally
+            {
+                this.Release();
+            }
         }
     }
 }
