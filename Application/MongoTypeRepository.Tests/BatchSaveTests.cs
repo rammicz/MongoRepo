@@ -44,7 +44,7 @@ namespace MongoTypeRepository.Tests
         }
 
         [Fact]
-        public void Save_Batch_UsesSingleBulkWrite_UpsertOn()
+        public void Save_Batch_UsesSingleBulkWrite_UpsertOn_AndGeneratesMissingIds()
         {
             var collection = new Mock<IMongoCollection<TestItem>>();
             var repo = new TestRepository(collection.Object);
@@ -57,27 +57,17 @@ namespace MongoTypeRepository.Tests
             collection.Verify(c => c.ReplaceOne(
                 It.IsAny<FilterDefinition<TestItem>>(), It.IsAny<TestItem>(),
                 It.IsAny<ReplaceOptions>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        [Fact]
-        public void Save_Batch_GeneratesIdsForEmptyIdItems()
-        {
-            var collection = new Mock<IMongoCollection<TestItem>>();
-            var repo = new TestRepository(collection.Object);
-            var items = Enumerable.Range(0, 3).Select(_ => new TestItem()).ToList();
-            repo.Save(items);
             Assert.All(items, i => Assert.NotEqual(ObjectId.Empty, i.Id));
         }
 
         [Fact]
         public async Task SaveAsync_EmptyInput_PerformsZeroDriverCalls()
         {
+            // MockBehavior.Strict throws on any unconfigured call - reaching the end proves zero driver calls.
             var collection = new Mock<IMongoCollection<TestItem>>(MockBehavior.Strict);
             var repo = new TestRepository(collection.Object);
             await repo.SaveAsync(new List<TestItem>());
             await repo.UpdateAsync(new List<TestItem>());
-            // MockBehavior.Strict throws on any unconfigured call, so reaching here
-            // proves no driver method was invoked.
         }
 
         [Fact]

@@ -101,8 +101,7 @@ namespace MongoTypeRepository
 
         public Tdb GetById(ObjectId id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            return Collection.Find(filter).SingleOrDefault();
+            return Collection.Find(IdFilter(id)).SingleOrDefault();
         }
 
         /// <summary>
@@ -113,13 +112,7 @@ namespace MongoTypeRepository
         /// <param name="objectsToSave"></param>
         public void Update(IEnumerable<Tdb> objectsToSave)
         {
-            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: false, generateMissingIds: false);
-            if (models.Count == 0)
-            {
-                return;
-            }
-
-            Collection.BulkWrite(models);
+            BulkReplace(objectsToSave, isUpsert: false, generateMissingIds: false);
         }
 
         /// <summary>
@@ -128,9 +121,8 @@ namespace MongoTypeRepository
         /// <param name="objectToSave"></param>
         public ReplaceOneResult Update(Tdb objectToSave)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
             var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
-            return Collection.ReplaceOne(filter, objectToSave, updateOptions);
+            return Collection.ReplaceOne(IdFilter(objectToSave.Id), objectToSave, updateOptions);
         }
 
         public void Insert(Tdb item)
@@ -157,8 +149,7 @@ namespace MongoTypeRepository
 
         public void Delete(ObjectId id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            Collection.DeleteOne(filter);
+            Collection.DeleteOne(IdFilter(id));
         }
 
         public DeleteResult DeleteAll()
@@ -192,14 +183,9 @@ namespace MongoTypeRepository
         /// <param name="objectToSave"></param>
         public void Save(Tdb objectToSave)
         {
-            if (objectToSave.Id == ObjectId.Empty)
-            {
-                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
-            }
-
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            EnsureId(objectToSave);
             var updateOptions = new ReplaceOptions { IsUpsert = true }; // update or insert / upsert
-            Collection.ReplaceOne(filter, objectToSave, updateOptions);
+            Collection.ReplaceOne(IdFilter(objectToSave.Id), objectToSave, updateOptions);
         }
 
         public async Task<Tdb> GetByIdAsync(string id)
@@ -209,8 +195,7 @@ namespace MongoTypeRepository
 
         public async Task<Tdb> GetByIdAsync(ObjectId id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            return (await Collection.FindAsync(filter)).SingleOrDefault();
+            return (await Collection.FindAsync(IdFilter(id))).SingleOrDefault();
         }
 
         public List<Tdb> Find(FilterDefinition<Tdb> filter)
@@ -277,13 +262,7 @@ namespace MongoTypeRepository
         /// <param name="objectsToSave"></param>
         public void Save(IEnumerable<Tdb> objectsToSave)
         {
-            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: true, generateMissingIds: true);
-            if (models.Count == 0)
-            {
-                return;
-            }
-
-            Collection.BulkWrite(models);
+            BulkReplace(objectsToSave, isUpsert: true, generateMissingIds: true);
         }
 
         /// <summary>
@@ -292,15 +271,9 @@ namespace MongoTypeRepository
         ///     items with an empty Id get a freshly generated one first.
         ///     An empty input is a no-op (the driver rejects an empty request list).
         /// </summary>
-        public async Task SaveAsync(IEnumerable<Tdb> objectsToSave)
+        public Task SaveAsync(IEnumerable<Tdb> objectsToSave)
         {
-            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: true, generateMissingIds: true);
-            if (models.Count == 0)
-            {
-                return;
-            }
-
-            await Collection.BulkWriteAsync(models);
+            return BulkReplaceAsync(objectsToSave, isUpsert: true, generateMissingIds: true);
         }
 
         /// <summary>
@@ -309,34 +282,49 @@ namespace MongoTypeRepository
         /// <param name="objectToSave"></param>
         public async Task SaveAsync(Tdb objectToSave)
         {
-            if (objectToSave.Id == ObjectId.Empty)
-            {
-                objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
-            }
-
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+            EnsureId(objectToSave);
             var updateOptions = new ReplaceOptions { IsUpsert = true }; // update or insert / upsert
-            await Collection.ReplaceOneAsync(filter, objectToSave, updateOptions);
+            await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions);
         }
 
         /// <summary>
         ///     Replaces documents in DB, based on _id.
         ///     Issues a single BulkWriteAsync (one ReplaceOneModel per item, upsert off);
         ///     an empty input is a no-op (the driver rejects an empty request list).
-        ///     Return type stays <see cref="Task"/> (not <c>Task&lt;BulkWriteResult&gt;</c>): the
-        ///     <see cref="ITypeRepositoryBase{Tdb}"/> contract declares it as <see cref="Task"/>,
-        ///     so surfacing the BulkWriteResult would be a breaking change. The result is discarded.
+        ///     Returns <see cref="Task"/> per the interface contract; the BulkWriteResult is discarded.
         /// </summary>
         /// <param name="objectsToSave"></param>
-        public async Task UpdateAsync(IEnumerable<Tdb> objectsToSave)
+        public Task UpdateAsync(IEnumerable<Tdb> objectsToSave)
         {
-            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: false, generateMissingIds: false);
-            if (models.Count == 0)
-            {
-                return;
-            }
+            return BulkReplaceAsync(objectsToSave, isUpsert: false, generateMissingIds: false);
+        }
 
-            await Collection.BulkWriteAsync(models);
+        /// <summary>
+        ///     Replaces document in DB, based on _id
+        /// </summary>
+        /// <param name="objectToSave"></param>
+        public async Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave)
+        {
+            var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
+            return await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions);
+        }
+
+        private void BulkReplace(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
+        {
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert, generateMissingIds);
+            if (models.Count > 0)
+            {
+                Collection.BulkWrite(models);
+            }
+        }
+
+        private async Task BulkReplaceAsync(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
+        {
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert, generateMissingIds);
+            if (models.Count > 0)
+            {
+                await Collection.BulkWriteAsync(models);
+            }
         }
 
         /// <summary>
@@ -346,30 +334,33 @@ namespace MongoTypeRepository
         /// </summary>
         private static List<WriteModel<Tdb>> BuildReplaceModels(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
         {
-            var models = new List<WriteModel<Tdb>>();
+            var models = new List<WriteModel<Tdb>>(objectsToSave is ICollection<Tdb> c ? c.Count : 0);
             foreach (Tdb objectToSave in objectsToSave)
             {
-                if (generateMissingIds && objectToSave.Id == ObjectId.Empty)
+                if (generateMissingIds)
                 {
-                    objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
+                    EnsureId(objectToSave);
                 }
 
-                FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
-                models.Add(new ReplaceOneModel<Tdb>(filter, objectToSave) { IsUpsert = isUpsert });
+                models.Add(new ReplaceOneModel<Tdb>(IdFilter(objectToSave.Id), objectToSave) { IsUpsert = isUpsert });
             }
 
             return models;
         }
 
-        /// <summary>
-        ///     Replaces document in DB, based on _id
-        /// </summary>
-        /// <param name="objectToSave"></param>
-        public async Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave)
+        /// <summary>Single construction point for the by-_id filter used across CRUD paths.</summary>
+        private static FilterDefinition<Tdb> IdFilter(ObjectId id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
-            var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
-            return await Collection.ReplaceOneAsync(filter, objectToSave, updateOptions);
+            return new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
+        }
+
+        /// <summary>Assigns a freshly generated ObjectId when the item's Id is empty (Save semantics).</summary>
+        private static void EnsureId(Tdb obj)
+        {
+            if (obj.Id == ObjectId.Empty)
+            {
+                obj.Id = ObjectId.GenerateNewId(DateTime.Now);
+            }
         }
 
         public async Task InsertAsync(Tdb item)
@@ -396,8 +387,7 @@ namespace MongoTypeRepository
 
         public async Task<DeleteResult> DeleteAsync(ObjectId id)
         {
-            FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", id));
-            return await Collection.DeleteOneAsync(filter);
+            return await Collection.DeleteOneAsync(IdFilter(id));
         }
 
         public async Task<DeleteResult> DeleteAllAsync()
