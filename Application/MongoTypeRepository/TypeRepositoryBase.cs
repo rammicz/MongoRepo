@@ -456,15 +456,15 @@ namespace MongoTypeRepository
                             totalFilter &= filter;
                             break;
                         case FilterOperator.Contains:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(Regex.Escape(filtering.Value), "i"));
+                            filter = RegexFilter(filtering.By, filtering.Value);
                             totalFilter &= filter;
                             break;
                         case FilterOperator.StartsWith:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression("^" + Regex.Escape(filtering.Value), "i"));
+                            filter = RegexFilter(filtering.By, filtering.Value, prefix: "^");
                             totalFilter &= filter;
                             break;
                         case FilterOperator.EndsWidth:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(Regex.Escape(filtering.Value) + "$", "i"));
+                            filter = RegexFilter(filtering.By, filtering.Value, suffix: "$");
                             totalFilter &= filter;
                             break;
                         case FilterOperator.GreaterThan:
@@ -491,6 +491,17 @@ namespace MongoTypeRepository
             }
 
             return totalFilter;
+        }
+
+        /// <summary>
+        /// Builds a case-insensitive regex filter from a user-supplied filter value.
+        /// Single construction point for paging regex filters: the value always passes
+        /// through <see cref="Regex.Escape(string)"/> (regex injection / ReDoS guard, #12)
+        /// and a null value degrades to a match-anything pattern instead of throwing.
+        /// </summary>
+        private static FilterDefinition<Tdb> RegexFilter(string field, string value, string prefix = "", string suffix = "")
+        {
+            return Builders<Tdb>.Filter.Regex(field, new BsonRegularExpression(prefix + Regex.Escape(value ?? string.Empty) + suffix, "i"));
         }
 
         private void SetUp(string databaseName, string collectionName, int concurentTaskLimit = 0)

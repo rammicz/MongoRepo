@@ -38,64 +38,24 @@ namespace MongoTypeRepository.Tests
             Assert.Equal(new BsonDocument("Name", "alice"), rendered);
         }
 
-        [Fact]
-        public void ContainsFilter_EscapesRegexMetacharacters()
+        [Theory]
+        [InlineData(FilterOperator.Contains, "a(b+", @"a\(b\+")] // metacharacters escaped (red spec for #12)
+        [InlineData(FilterOperator.Contains, "1.5", @"1\.5")] // dot escaped: literal "1.5" must not match "135"
+        [InlineData(FilterOperator.StartsWith, "a(b+", @"^a\(b\+")] // anchored + escaped
+        [InlineData(FilterOperator.EndsWidth, "a(b+", @"a\(b\+$")] // anchored + escaped
+        [InlineData(FilterOperator.Contains, null, "")] // null degrades to match-anything, no throw (pre-#12 parity)
+        public void StringFilter_EscapesValueAndAnchors(FilterOperator op, string value, string expectedPattern)
         {
             var paging = new RepositoryPaging
             {
                 Filtering = new List<Filtering>
                 {
-                    new Filtering { By = "Name", Operator = FilterOperator.Contains, Value = "a(b+" }
+                    new Filtering { By = "Name", Operator = op, Value = value }
                 }
             };
             var filter = TestRepository.BuildPagingFilter(paging);
             var rendered = Render(filter);
-            Assert.Equal(@"a\(b\+", Pattern(rendered, "Name"));
-        }
-
-        [Fact]
-        public void ContainsFilter_EscapesDot_SoLiteralMatchOnly()
-        {
-            var paging = new RepositoryPaging
-            {
-                Filtering = new List<Filtering>
-                {
-                    new Filtering { By = "Name", Operator = FilterOperator.Contains, Value = "1.5" }
-                }
-            };
-            var filter = TestRepository.BuildPagingFilter(paging);
-            var rendered = Render(filter);
-            Assert.Equal(@"1\.5", Pattern(rendered, "Name"));
-        }
-
-        [Fact]
-        public void StartsWithFilter_AnchorsAndEscapes()
-        {
-            var paging = new RepositoryPaging
-            {
-                Filtering = new List<Filtering>
-                {
-                    new Filtering { By = "Name", Operator = FilterOperator.StartsWith, Value = "a(b+" }
-                }
-            };
-            var filter = TestRepository.BuildPagingFilter(paging);
-            var rendered = Render(filter);
-            Assert.Equal(@"^a\(b\+", Pattern(rendered, "Name"));
-        }
-
-        [Fact]
-        public void EndsWithFilter_AnchorsAndEscapes()
-        {
-            var paging = new RepositoryPaging
-            {
-                Filtering = new List<Filtering>
-                {
-                    new Filtering { By = "Name", Operator = FilterOperator.EndsWidth, Value = "a(b+" }
-                }
-            };
-            var filter = TestRepository.BuildPagingFilter(paging);
-            var rendered = Render(filter);
-            Assert.Equal(@"a\(b\+$", Pattern(rendered, "Name"));
+            Assert.Equal(expectedPattern, Pattern(rendered, "Name"));
         }
     }
 }
