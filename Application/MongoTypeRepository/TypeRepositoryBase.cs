@@ -362,11 +362,19 @@ namespace MongoTypeRepository
 
             var sorting = SetSorting(paging);
 
-            var findOptions = new FindOptions<Tdb, Tdb> { Sort = sorting };
-            var collection = await Collection.FindAsync(totalFilter, findOptions);
-            var skip = (paging.CurrentPage - 1) * paging.PageSize;
-            var result = collection.ToEnumerable().Skip(skip).Take(paging.PageSize).ToList();
+            var findOptions = new FindOptions<Tdb, Tdb>
+            {
+                Sort = sorting,
+                Skip = (paging.CurrentPage - 1) * paging.PageSize,
+                Limit = paging.PageSize,
+            };
 
+            // Server-side skip/limit: only the requested page is transferred and
+            // deserialized (mirrors the sync GetPagedResults .Skip().Limit() path).
+            var cursor = await Collection.FindAsync(totalFilter, findOptions);
+            var result = await cursor.ToListAsync();
+
+            // TotalItems reflects the full filtered set, independent of skip/limit.
             paging.TotalItems = await countTask;
             return result;
         }
