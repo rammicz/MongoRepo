@@ -16,7 +16,7 @@ namespace MongoTypeRepository.Tests
             var item = new TestItem();
             await repo.SaveAsync(item);
             var drift = (item.Id.CreationTime - DateTime.UtcNow).Duration();
-            Assert.True(drift < TimeSpan.FromMinutes(5), $"Id timestamp off by {drift} - local time leaked into the ObjectId");
+            Assert.True(drift < TimeSpan.FromMinutes(5), $"Id timestamp off by {drift} - ObjectId.CreationTime must track UTC");
         }
     }
 }

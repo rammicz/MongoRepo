@@ -41,7 +41,7 @@ jobs:
 
       - name: Test
         env:
-          TZ: Europe/Prague   # non-UTC zone keeps the ObjectId-UTC spec (issue #13) meaningful
+          TZ: Europe/Prague   # forward guard: would catch a future regression to a TZ-sensitive id generator (#13)
         run: dotnet test Application/MongoTypeRepository.Tests/MongoTypeRepository.Tests.csproj -c Release
 
       - name: Pack
