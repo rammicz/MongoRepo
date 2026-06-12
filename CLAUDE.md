@@ -16,9 +16,12 @@ dotnet build Application/MongoTypeRepositoryExample/MongoTypeRepositoryExample.c
 
 # Run example app (requires local MongoDB or configured connection string)
 dotnet run --project Application/MongoTypeRepositoryExample/MongoTypeRepositoryExample.csproj
+
+# Run the unit tests (no live MongoDB required - collections are mocked)
+dotnet test Application/MongoTypeRepository.Tests/MongoTypeRepository.Tests.csproj
 ```
 
-There are no test projects in this solution.
+Tests live in `Application/MongoTypeRepository.Tests` (xUnit + Moq, targets net10.0). They use mocked `IMongoCollection<T>` via the internal test-seam constructor on `TypeRepositoryBase<Tdb>` (`InternalsVisibleTo("MongoTypeRepository.Tests")`), so no live MongoDB is needed. CI runs `dotnet test` on every push/PR (`.github/workflows/build.yml`) and before packing in the publish workflow; a failing test fails the build.
 
 ## NuGet Package
 

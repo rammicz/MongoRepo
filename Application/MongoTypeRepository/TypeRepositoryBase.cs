@@ -77,6 +77,16 @@ namespace MongoTypeRepository
             SetUp(databaseName, collectionName, concurentTaskLimit);
         }
 
+        /// <summary>
+        /// Test seam: builds a repository directly over a supplied collection
+        /// (e.g. a mocked <see cref="IMongoCollection{Tdb}"/>) with no live
+        /// connection. Used by the unit test project; see InternalsVisibleTo.
+        /// </summary>
+        internal TypeRepositoryBase(IMongoCollection<Tdb> collection)
+        {
+            Collection = collection;
+        }
+
         public IMongoCollection<Tdb> Collection { get; private set; }
         public MongoClient MongoClient { get; }
         public IQueryable<Tdb> CollectionQuery => Collection.AsQueryable();
@@ -392,7 +402,7 @@ namespace MongoTypeRepository
             return null;
         }
 
-        private static FilterDefinition<Tdb> PreparePagingFilter(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
+        internal static FilterDefinition<Tdb> PreparePagingFilter(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
         {
             var fb = new FilterDefinitionBuilder<Tdb>();
             FilterDefinition<Tdb> totalFilter = primaryFilters ?? Builders<Tdb>.Filter.Empty; // or maybe  JsonFilterDefinition<Tdb>.Empty

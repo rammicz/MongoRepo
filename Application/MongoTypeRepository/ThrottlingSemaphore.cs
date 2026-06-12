@@ -33,5 +33,20 @@ namespace MongoTypeRepository
             this.Release();
         }
 
+        // Func-based overloads: these exist as a compile-time seam so the
+        // sibling test specs (#9) can be written against the planned API.
+        // NOTE: semantics intentionally mirror the existing hot-task overloads
+        // (the factory is invoked eagerly, before WaitAsync) so this does NOT
+        // fix the throttling no-op bug tracked by #9 - that is its own issue.
+        public Task<T> AddRequest<T>(Func<Task<T>> taskFactory)
+        {
+            return AddRequest(taskFactory());
+        }
+
+        public Task AddRequest(Func<Task> taskFactory)
+        {
+            return AddRequest(taskFactory());
+        }
+
     }
 }

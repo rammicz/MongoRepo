@@ -39,6 +39,9 @@ jobs:
         with:
           user: rammi
 
+      - name: Test
+        run: dotnet test Application/MongoTypeRepository.Tests/MongoTypeRepository.Tests.csproj -c Release
+
       - name: Pack
         run: dotnet pack Application/MongoTypeRepository/MongoTypeRepository.csproj -c Release
 
