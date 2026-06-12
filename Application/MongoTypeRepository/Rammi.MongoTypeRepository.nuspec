@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>10.0.11</version>
+    <version>10.1.0</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -21,7 +21,12 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
-		- Add native net10.0 and net472 build targets. The package now supports .NET Framework 4.7.2/4.8/4.8.1 (net472), .NET Core 3.x / .NET 5-7 / Mono / Xamarin (netstandard2.1), .NET 8, and .NET 10.
+		- Throttling fixed: async operations are now actually limited by the configured concurrency cap (previously operations started before the semaphore wait), and faulted operations no longer leak permits.
+		- CancellationToken support: every async repository method accepts an optional trailing CancellationToken, honored while queued on the throttle and forwarded to the driver. Source-compatible; recompile required (binary-breaking).
+		- Batch Save/Update(IEnumerable) now issue a single BulkWrite instead of one ReplaceOne round-trip per item.
+		- GetPagedResultsAsync pages server-side (Skip/Limit) instead of transferring all preceding pages.
+		- Paging filters (Contains/StartsWith/EndsWith) escape user input - fixes regex injection/ReDoS and literal matching of metacharacters.
+		- New ObjectIds use the driver's UTC timestamp convention.
     </releaseNotes>
     <tags>mongodb mongo nosql azure cosmos cosmosdb repository strong-types strong type datamodel repo</tags>
     <dependencies>
