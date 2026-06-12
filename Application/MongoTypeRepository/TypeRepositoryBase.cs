@@ -106,15 +106,20 @@ namespace MongoTypeRepository
         }
 
         /// <summary>
-        ///     Replaces documents in DB, based on _id
+        ///     Replaces documents in DB, based on _id.
+        ///     Issues a single BulkWrite (one ReplaceOneModel per item, upsert off);
+        ///     an empty input is a no-op (the driver rejects an empty request list).
         /// </summary>
         /// <param name="objectsToSave"></param>
         public void Update(IEnumerable<Tdb> objectsToSave)
         {
-            foreach (Tdb obj in objectsToSave)
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: false, generateMissingIds: false);
+            if (models.Count == 0)
             {
-                Update(obj);
+                return;
             }
+
+            Collection.BulkWrite(models);
         }
 
         /// <summary>
@@ -264,24 +269,38 @@ namespace MongoTypeRepository
         }
 
         /// <summary>
-        ///     Replace or insert documents in DB, based on _id
+        ///     Replace or insert documents in DB, based on _id.
+        ///     Issues a single BulkWrite (one ReplaceOneModel per item, upsert on);
+        ///     items with an empty Id get a freshly generated one first.
+        ///     An empty input is a no-op (the driver rejects an empty request list).
         /// </summary>
         /// <param name="objectsToSave"></param>
         public void Save(IEnumerable<Tdb> objectsToSave)
         {
-            foreach (Tdb objectToSave in objectsToSave)
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: true, generateMissingIds: true);
+            if (models.Count == 0)
             {
-                Save(objectToSave);
+                return;
             }
+
+            Collection.BulkWrite(models);
         }
 
         /// <summary>
-        ///     Replace or insert documents in DB, based on _id
+        ///     Replace or insert documents in DB, based on _id.
+        ///     Issues a single BulkWriteAsync (one ReplaceOneModel per item, upsert on);
+        ///     items with an empty Id get a freshly generated one first.
+        ///     An empty input is a no-op (the driver rejects an empty request list).
         /// </summary>
         public async Task SaveAsync(IEnumerable<Tdb> objectsToSave)
         {
-            var tasks = objectsToSave.Select(SaveAsync);
-            await Task.WhenAll(tasks);
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: true, generateMissingIds: true);
+            if (models.Count == 0)
+            {
+                return;
+            }
+
+            await Collection.BulkWriteAsync(models);
         }
 
         /// <summary>
@@ -301,13 +320,45 @@ namespace MongoTypeRepository
         }
 
         /// <summary>
-        ///     Replaces documents in DB, based on _id
+        ///     Replaces documents in DB, based on _id.
+        ///     Issues a single BulkWriteAsync (one ReplaceOneModel per item, upsert off);
+        ///     an empty input is a no-op (the driver rejects an empty request list).
+        ///     Return type stays <see cref="Task"/> (not <c>Task&lt;BulkWriteResult&gt;</c>): the
+        ///     <see cref="ITypeRepositoryBase{Tdb}"/> contract declares it as <see cref="Task"/>,
+        ///     so surfacing the BulkWriteResult would be a breaking change. The result is discarded.
         /// </summary>
         /// <param name="objectsToSave"></param>
         public async Task UpdateAsync(IEnumerable<Tdb> objectsToSave)
         {
-            var tasks = objectsToSave.Select(UpdateAsync);
-            await Task.WhenAll(tasks);
+            List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert: false, generateMissingIds: false);
+            if (models.Count == 0)
+            {
+                return;
+            }
+
+            await Collection.BulkWriteAsync(models);
+        }
+
+        /// <summary>
+        ///     Builds the ReplaceOneModel list shared by the batched Save/Update overloads.
+        ///     For Save (<paramref name="generateMissingIds"/> = true) an empty Id is assigned a
+        ///     freshly generated ObjectId before the model is built, mirroring single-item Save.
+        /// </summary>
+        private static List<WriteModel<Tdb>> BuildReplaceModels(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
+        {
+            var models = new List<WriteModel<Tdb>>();
+            foreach (Tdb objectToSave in objectsToSave)
+            {
+                if (generateMissingIds && objectToSave.Id == ObjectId.Empty)
+                {
+                    objectToSave.Id = ObjectId.GenerateNewId(DateTime.Now);
+                }
+
+                FilterDefinition<Tdb> filter = new BsonDocumentFilterDefinition<Tdb>(new BsonDocument("_id", objectToSave.Id));
+                models.Add(new ReplaceOneModel<Tdb>(filter, objectToSave) { IsUpsert = isUpsert });
+            }
+
+            return models;
         }
 
         /// <summary>
