@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -455,15 +456,15 @@ namespace MongoTypeRepository
                             totalFilter &= filter;
                             break;
                         case FilterOperator.Contains:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format(".*{0}.*", filtering.Value), "i"));
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(Regex.Escape(filtering.Value), "i"));
                             totalFilter &= filter;
                             break;
                         case FilterOperator.StartsWith:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format("^{0}.*", filtering.Value), "i"));
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression("^" + Regex.Escape(filtering.Value), "i"));
                             totalFilter &= filter;
                             break;
                         case FilterOperator.EndsWidth:
-                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(string.Format(".*{0}$", filtering.Value), "i"));
+                            filter = Builders<Tdb>.Filter.Regex(filtering.By, new BsonRegularExpression(Regex.Escape(filtering.Value) + "$", "i"));
                             totalFilter &= filter;
                             break;
                         case FilterOperator.GreaterThan:
