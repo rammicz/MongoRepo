@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoTypeRepository;
 using Xunit;
@@ -70,6 +71,43 @@ namespace MongoTypeRepository.Tests
             blocker.SetResult(true);
             await queued;
             Assert.True(factoryInvoked);
+        }
+
+        // A waiter queued on a saturated throttle (limit 1, slot held) must be released
+        // with an OperationCanceledException when its token is cancelled, and the held
+        // slot must be unaffected (the original holder keeps running and can complete).
+        [Fact]
+        public async Task AddRequest_TokenCancelledWhileQueued_UnblocksWaiter()
+        {
+            var semaphore = new ThrottlingSemaphore(1, 1);
+
+            // Hold the only permit with a never-completing operation.
+            var blocker = new TaskCompletionSource<bool>();
+            var holder = semaphore.AddRequest(() => blocker.Task);
+            await Task.Yield();
+
+            using var cts = new CancellationTokenSource();
+            var waiterFactoryInvoked = false;
+            var waiter = semaphore.AddRequest(() =>
+            {
+                waiterFactoryInvoked = true;
+                return Task.CompletedTask;
+            }, cts.Token);
+
+            // The slot is held, so the waiter is parked on WaitAsync, not running.
+            await Task.Delay(50);
+            Assert.False(waiter.IsCompleted, "waiter ran while the only permit was held");
+
+            cts.Cancel();
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiter);
+            Assert.False(waiterFactoryInvoked, "cancelled waiter must not invoke its factory");
+
+            // The held slot is unaffected: the original holder still completes cleanly.
+            blocker.SetResult(true);
+            var completed = await Task.WhenAny(holder, Task.Delay(1000)) == holder;
+            Assert.True(completed, "the held slot was disturbed by the queued waiter's cancellation");
+            await holder;
         }
     }
 }

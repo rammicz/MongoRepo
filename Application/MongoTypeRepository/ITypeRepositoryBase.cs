@@ -46,6 +46,9 @@ namespace MongoTypeRepository
         // source-compatible (existing call sites keep compiling) but BINARY-breaking:
         // recompilation is required against this assembly. Reserve removal/signature
         // changes for the next major version.
+        // The repository is the public boundary and must honor the token regardless of
+        // whether the throttle decorator wraps the collection - hence each async
+        // implementation fast-fails a pre-cancelled token before touching the driver.
         Task<Tdb> GetByIdAsync(string id, CancellationToken cancellationToken = default);
         Task<Tdb> GetByIdAsync(ObjectId id, CancellationToken cancellationToken = default);
 
