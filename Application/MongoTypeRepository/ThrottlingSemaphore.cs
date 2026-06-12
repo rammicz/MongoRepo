@@ -47,6 +47,5 @@ namespace MongoTypeRepository
         {
             return AddRequest(taskFactory());
         }
-
     }
 }

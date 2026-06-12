@@ -3,6 +3,12 @@ name: Build and Test
 # Builds the solution and runs the xUnit test suite on every push and pull
 # request. A failing test fails the job (dotnet test returns a non-zero exit
 # code), gating the change before it can be released.
+#
+# The full solution is built deliberately: it compiles every library TFM
+# (net48/net472, netstandard2.1, net8.0-net10.0) plus the example app, so a
+# TFM-specific compile break is caught here rather than at publish time.
+# The 10.0.x SDK alone can target all of them (older ref packs restore from
+# NuGet), so no extra SDK installs are needed.
 
 on:
   push:
@@ -19,9 +25,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
+          dotnet-version: 10.0.x
 
       - name: Build
         run: dotnet build MongoRepo.sln -c Release

@@ -81,6 +81,8 @@ namespace MongoTypeRepository
         /// Test seam: builds a repository directly over a supplied collection
         /// (e.g. a mocked <see cref="IMongoCollection{Tdb}"/>) with no live
         /// connection. Used by the unit test project; see InternalsVisibleTo.
+        /// Note: <see cref="MongoClient"/> intentionally stays null on this path;
+        /// the seam supports only Collection-routed operations.
         /// </summary>
         internal TypeRepositoryBase(IMongoCollection<Tdb> collection)
         {

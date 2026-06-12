@@ -33,35 +33,19 @@ namespace MongoTypeRepository.Tests
         }
     }
 
-    /// <summary>An <see cref="IAsyncCursor{T}"/> stub returning a fixed set (default: none).</summary>
+    /// <summary>An <see cref="IAsyncCursor{T}"/> stub yielding no items.</summary>
     public static class TestCursor
     {
-        public static IAsyncCursor<T> Empty<T>() => new StubCursor<T>(new List<T>());
+        public static IAsyncCursor<T> Empty<T>() => new EmptyCursor<T>();
 
-        public static IAsyncCursor<T> Of<T>(IEnumerable<T> items) => new StubCursor<T>(new List<T>(items));
-
-        private sealed class StubCursor<T> : IAsyncCursor<T>
+        private sealed class EmptyCursor<T> : IAsyncCursor<T>
         {
-            private readonly List<T> _items;
-            private bool _moved;
+            public IEnumerable<T> Current => new List<T>();
 
-            public StubCursor(List<T> items) => _items = items;
-
-            public IEnumerable<T> Current => _moved ? _items : new List<T>();
-
-            public bool MoveNext(CancellationToken cancellationToken = default)
-            {
-                if (_moved)
-                {
-                    return false;
-                }
-
-                _moved = true;
-                return _items.Count > 0;
-            }
+            public bool MoveNext(CancellationToken cancellationToken = default) => false;
 
             public Task<bool> MoveNextAsync(CancellationToken cancellationToken = default)
-                => Task.FromResult(MoveNext(cancellationToken));
+                => Task.FromResult(false);
 
             public void Dispose()
             {
