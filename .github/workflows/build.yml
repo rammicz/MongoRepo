@@ -31,4 +31,6 @@ jobs:
         run: dotnet build MongoRepo.sln -c Release
 
       - name: Test
+        env:
+          TZ: Europe/Prague   # non-UTC zone keeps the ObjectId-UTC spec (issue #13) meaningful
         run: dotnet test Application/MongoTypeRepository.Tests/MongoTypeRepository.Tests.csproj -c Release --no-build

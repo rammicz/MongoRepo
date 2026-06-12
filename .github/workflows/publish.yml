@@ -40,6 +40,8 @@ jobs:
           user: rammi
 
       - name: Test
+        env:
+          TZ: Europe/Prague   # non-UTC zone keeps the ObjectId-UTC spec (issue #13) meaningful
         run: dotnet test Application/MongoTypeRepository.Tests/MongoTypeRepository.Tests.csproj -c Release
 
       - name: Pack

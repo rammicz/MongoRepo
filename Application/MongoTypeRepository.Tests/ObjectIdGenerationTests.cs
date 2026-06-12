@@ -8,7 +8,7 @@ namespace MongoTypeRepository.Tests
 {
     public class ObjectIdGenerationTests
     {
-        [Fact(Skip = "red: GenerateNewId(DateTime.Now) embeds local time - run with TZ != UTC")]
+        [Fact]
         public async Task SaveAsync_NewItem_IdTimestampIsUtc()
         {
             var collection = new Mock<IMongoCollection<TestItem>>();

@@ -359,7 +359,7 @@ namespace MongoTypeRepository
         {
             if (obj.Id == ObjectId.Empty)
             {
-                obj.Id = ObjectId.GenerateNewId(DateTime.Now);
+                obj.Id = ObjectId.GenerateNewId();
             }
         }
 
