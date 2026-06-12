@@ -17,9 +17,9 @@ namespace MongoTypeRepository
         {
         }
 
-        public async Task<T> AddRequest<T>(Func<Task<T>> taskFactory)
+        public async Task<T> AddRequest<T>(Func<Task<T>> taskFactory, CancellationToken cancellationToken = default)
         {
-            await this.WaitAsync();
+            await this.WaitAsync(cancellationToken);
             try
             {
                 return await taskFactory();
@@ -30,9 +30,9 @@ namespace MongoTypeRepository
             }
         }
 
-        public async Task AddRequest(Func<Task> taskFactory)
+        public async Task AddRequest(Func<Task> taskFactory, CancellationToken cancellationToken = default)
         {
-            await this.WaitAsync();
+            await this.WaitAsync(cancellationToken);
             try
             {
                 await taskFactory();

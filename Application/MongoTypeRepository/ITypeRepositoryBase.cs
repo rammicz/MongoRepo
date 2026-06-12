@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -41,15 +42,19 @@ namespace MongoTypeRepository
         /// <param name="objectToSave"></param>
         void Save(Tdb objectToSave);
 
-        Task<Tdb> GetByIdAsync(string id);
-        Task<Tdb> GetByIdAsync(ObjectId id);
+        // NOTE: the trailing optional CancellationToken on the async members below is
+        // source-compatible (existing call sites keep compiling) but BINARY-breaking:
+        // recompilation is required against this assembly. Reserve removal/signature
+        // changes for the next major version.
+        Task<Tdb> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+        Task<Tdb> GetByIdAsync(ObjectId id, CancellationToken cancellationToken = default);
 
         List<Tdb> Find(FilterDefinition<Tdb> filter);
         List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort);
         List<Tdb> Find(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit);
-        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter);
-        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort);
-        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, CancellationToken cancellationToken = default);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, CancellationToken cancellationToken = default);
+        Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Replace or insert documents in DB, based on _id
@@ -60,32 +65,32 @@ namespace MongoTypeRepository
         /// <summary>
         ///     Replace or insert documents in DB, based on _id
         /// </summary>
-        Task SaveAsync(IEnumerable<Tdb> objectsToSave);
+        Task SaveAsync(IEnumerable<Tdb> objectsToSave, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Replace or insert document in DB
         /// </summary>
         /// <param name="objectToSave"></param>
-        Task SaveAsync(Tdb objectToSave);
+        Task SaveAsync(Tdb objectToSave, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Replaces documents in DB, based on _id
         /// </summary>
         /// <param name="objectsToSave"></param>
-        Task UpdateAsync(IEnumerable<Tdb> objectsToSave);
+        Task UpdateAsync(IEnumerable<Tdb> objectsToSave, CancellationToken cancellationToken = default);
 
         /// <summary>
         ///     Replaces document in DB, based on _id
         /// </summary>
         /// <param name="objectToSave"></param>
-        Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave);
+        Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave, CancellationToken cancellationToken = default);
 
-        Task InsertAsync(Tdb item);
-        Task InsertAsync(IEnumerable<Tdb> items);
-        Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete);
-        Task<DeleteResult> DeleteAsync(string id);
-        Task<DeleteResult> DeleteAsync(ObjectId id);
-        Task<DeleteResult> DeleteAllAsync();
-        Task<List<Tdb>> GetPagedResultsAsync(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging);
+        Task InsertAsync(Tdb item, CancellationToken cancellationToken = default);
+        Task InsertAsync(IEnumerable<Tdb> items, CancellationToken cancellationToken = default);
+        Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete, CancellationToken cancellationToken = default);
+        Task<DeleteResult> DeleteAsync(string id, CancellationToken cancellationToken = default);
+        Task<DeleteResult> DeleteAsync(ObjectId id, CancellationToken cancellationToken = default);
+        Task<DeleteResult> DeleteAllAsync(CancellationToken cancellationToken = default);
+        Task<List<Tdb>> GetPagedResultsAsync(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging, CancellationToken cancellationToken = default);
     }
 }

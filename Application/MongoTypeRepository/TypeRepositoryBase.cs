@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -188,14 +189,15 @@ namespace MongoTypeRepository
             Collection.ReplaceOne(IdFilter(objectToSave.Id), objectToSave, updateOptions);
         }
 
-        public async Task<Tdb> GetByIdAsync(string id)
+        public async Task<Tdb> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         {
-            return await GetByIdAsync(ObjectId.Parse(id));
+            return await GetByIdAsync(ObjectId.Parse(id), cancellationToken);
         }
 
-        public async Task<Tdb> GetByIdAsync(ObjectId id)
+        public async Task<Tdb> GetByIdAsync(ObjectId id, CancellationToken cancellationToken = default)
         {
-            return (await Collection.FindAsync(IdFilter(id))).SingleOrDefault();
+            cancellationToken.ThrowIfCancellationRequested();
+            return (await Collection.FindAsync(IdFilter(id), cancellationToken: cancellationToken)).SingleOrDefault();
         }
 
         public List<Tdb> Find(FilterDefinition<Tdb> filter)
@@ -225,18 +227,20 @@ namespace MongoTypeRepository
             return query.ToList();
         }
 
-        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter)
+        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, CancellationToken cancellationToken = default)
         {
-            return FindAsync(filter, null, null);
+            return FindAsync(filter, null, null, cancellationToken);
         }
 
-        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort)
+        public Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, CancellationToken cancellationToken = default)
         {
-            return FindAsync(filter, sort, null);
+            return FindAsync(filter, sort, null, cancellationToken);
         }
 
-        public async Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit)
+        public async Task<List<Tdb>> FindAsync(FilterDefinition<Tdb> filter, SortDefinition<Tdb> sort, int? limit, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var options = new FindOptions<Tdb, Tdb>();
 
             if (sort != null)
@@ -249,8 +253,8 @@ namespace MongoTypeRepository
                 options.Limit = limit.Value;
             }
 
-            var cursor = await Collection.FindAsync(filter ?? FilterDefinition<Tdb>.Empty, options);
-            return await cursor.ToListAsync();
+            var cursor = await Collection.FindAsync(filter ?? FilterDefinition<Tdb>.Empty, options, cancellationToken);
+            return await cursor.ToListAsync(cancellationToken);
         }
 
         /// <summary>
@@ -271,20 +275,21 @@ namespace MongoTypeRepository
         ///     items with an empty Id get a freshly generated one first.
         ///     An empty input is a no-op (the driver rejects an empty request list).
         /// </summary>
-        public Task SaveAsync(IEnumerable<Tdb> objectsToSave)
+        public Task SaveAsync(IEnumerable<Tdb> objectsToSave, CancellationToken cancellationToken = default)
         {
-            return BulkReplaceAsync(objectsToSave, isUpsert: true, generateMissingIds: true);
+            return BulkReplaceAsync(objectsToSave, isUpsert: true, generateMissingIds: true, cancellationToken);
         }
 
         /// <summary>
         ///     Replace or insert document in DB
         /// </summary>
         /// <param name="objectToSave"></param>
-        public async Task SaveAsync(Tdb objectToSave)
+        public async Task SaveAsync(Tdb objectToSave, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             EnsureId(objectToSave);
             var updateOptions = new ReplaceOptions { IsUpsert = true }; // update or insert / upsert
-            await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions);
+            await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions, cancellationToken);
         }
 
         /// <summary>
@@ -294,19 +299,20 @@ namespace MongoTypeRepository
         ///     Returns <see cref="Task"/> per the interface contract; the BulkWriteResult is discarded.
         /// </summary>
         /// <param name="objectsToSave"></param>
-        public Task UpdateAsync(IEnumerable<Tdb> objectsToSave)
+        public Task UpdateAsync(IEnumerable<Tdb> objectsToSave, CancellationToken cancellationToken = default)
         {
-            return BulkReplaceAsync(objectsToSave, isUpsert: false, generateMissingIds: false);
+            return BulkReplaceAsync(objectsToSave, isUpsert: false, generateMissingIds: false, cancellationToken);
         }
 
         /// <summary>
         ///     Replaces document in DB, based on _id
         /// </summary>
         /// <param name="objectToSave"></param>
-        public async Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave)
+        public async Task<ReplaceOneResult> UpdateAsync(Tdb objectToSave, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var updateOptions = new ReplaceOptions { IsUpsert = false }; // update or insert / upsert
-            return await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions);
+            return await Collection.ReplaceOneAsync(IdFilter(objectToSave.Id), objectToSave, updateOptions, cancellationToken);
         }
 
         private void BulkReplace(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
@@ -318,12 +324,13 @@ namespace MongoTypeRepository
             }
         }
 
-        private async Task BulkReplaceAsync(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds)
+        private async Task BulkReplaceAsync(IEnumerable<Tdb> objectsToSave, bool isUpsert, bool generateMissingIds, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             List<WriteModel<Tdb>> models = BuildReplaceModels(objectsToSave, isUpsert, generateMissingIds);
             if (models.Count > 0)
             {
-                await Collection.BulkWriteAsync(models);
+                await Collection.BulkWriteAsync(models, cancellationToken: cancellationToken);
             }
         }
 
@@ -363,44 +370,50 @@ namespace MongoTypeRepository
             }
         }
 
-        public async Task InsertAsync(Tdb item)
+        public async Task InsertAsync(Tdb item, CancellationToken cancellationToken = default)
         {
-            await Collection.InsertOneAsync(item);
+            cancellationToken.ThrowIfCancellationRequested();
+            await Collection.InsertOneAsync(item, cancellationToken: cancellationToken);
         }
 
-        public async Task InsertAsync(IEnumerable<Tdb> items)
+        public async Task InsertAsync(IEnumerable<Tdb> items, CancellationToken cancellationToken = default)
         {
-            await Collection.InsertManyAsync(items);
+            cancellationToken.ThrowIfCancellationRequested();
+            await Collection.InsertManyAsync(items, cancellationToken: cancellationToken);
         }
 
-        public async Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete)
+        public async Task<DeleteResult> DeleteAsync(IMongoItem objectToDelete, CancellationToken cancellationToken = default)
         {
-            return await DeleteAsync(objectToDelete.Id);
+            return await DeleteAsync(objectToDelete.Id, cancellationToken);
         }
 
-        public async Task<DeleteResult> DeleteAsync(string id)
+        public async Task<DeleteResult> DeleteAsync(string id, CancellationToken cancellationToken = default)
         {
             // Parse to ObjectId first - the _id field is stored as ObjectId, so
             // a raw string filter would never match (silent no-op).
-            return await DeleteAsync(ObjectId.Parse(id));
+            return await DeleteAsync(ObjectId.Parse(id), cancellationToken);
         }
 
-        public async Task<DeleteResult> DeleteAsync(ObjectId id)
+        public async Task<DeleteResult> DeleteAsync(ObjectId id, CancellationToken cancellationToken = default)
         {
-            return await Collection.DeleteOneAsync(IdFilter(id));
+            cancellationToken.ThrowIfCancellationRequested();
+            return await Collection.DeleteOneAsync(IdFilter(id), cancellationToken);
         }
 
-        public async Task<DeleteResult> DeleteAllAsync()
+        public async Task<DeleteResult> DeleteAllAsync(CancellationToken cancellationToken = default)
         {
-            return await Collection.DeleteManyAsync(FilterDefinition<Tdb>.Empty);
+            cancellationToken.ThrowIfCancellationRequested();
+            return await Collection.DeleteManyAsync(FilterDefinition<Tdb>.Empty, cancellationToken);
         }
 
-        public async Task<List<Tdb>> GetPagedResultsAsync(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging)
+        public async Task<List<Tdb>> GetPagedResultsAsync(FilterDefinition<Tdb> primaryFilters, RepositoryPaging paging, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             SetPaging(paging);
 
             FilterDefinition<Tdb> totalFilter = PreparePagingFilter(primaryFilters, paging);
-            var countTask = Collection.CountDocumentsAsync(totalFilter);
+            var countTask = Collection.CountDocumentsAsync(totalFilter, cancellationToken: cancellationToken);
 
             var sorting = SetSorting(paging);
 
@@ -412,8 +425,8 @@ namespace MongoTypeRepository
                 Limit = paging.PageSize,
             };
 
-            var cursor = await Collection.FindAsync(totalFilter, findOptions);
-            var result = await cursor.ToListAsync();
+            var cursor = await Collection.FindAsync(totalFilter, findOptions, cancellationToken);
+            var result = await cursor.ToListAsync(cancellationToken);
 
             paging.TotalItems = await countTask;
             return result;
