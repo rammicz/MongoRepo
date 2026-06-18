@@ -176,4 +176,4 @@ The test suite mocks `IMongoCollection<T>`, so no running MongoDB is required; C
 
 ## License
 
-[Apache License 2.0](LICENSE) © Jiri Hernik
+[MIT](LICENSE) © Jiri Hernik
