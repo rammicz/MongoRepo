@@ -3,7 +3,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Rammi.MongoTypeRepository</id>
-    <version>10.1.0</version>
+    <version>10.1.1</version>
     <title>Strongly typed Mongo / Cosmos repository</title>
     <authors>Jiri Hernik</authors>
     <owners>Jiri Hernik</owners>
@@ -21,6 +21,10 @@
 		- Async operation throttling to not overload the DB connection
 	</description>
     <releaseNotes>
+		10.1.1
+		- Security: bumped MongoDB.Driver/MongoDB.Bson 3.5.2 -&gt; 3.9.0 to clear transitive advisories (Snappier NU1903 high, SharpCompress NU1902 moderate). No API changes.
+
+		10.1.0
 		- Throttling fixed: async operations are now actually limited by the configured concurrency cap (previously operations started before the semaphore wait), and faulted operations no longer leak permits.
 		- CancellationToken support: every async repository method accepts an optional trailing CancellationToken, honored while queued on the throttle and forwarded to the driver. Source-compatible; recompile required (binary-breaking).
 		- Batch Save/Update(IEnumerable) now issue a single BulkWrite instead of one ReplaceOne round-trip per item.
